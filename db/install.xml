@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="admin/tool/metadata/extractor/tika/db" VERSION="20191125" COMMENT="XMLDB file for Moodle admin/tool/metadata/extractor/tika"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="metadataextractor_tika" COMMENT="Default comment for metadataextractor_tika, please edit me">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
+        <FIELD NAME="contenthash" TYPE="char" LENGTH="40" NOTNULL="true" SEQUENCE="false" COMMENT="A unique identifier associated with the resource based on SHA1 hash of resource content."/>
+        <FIELD NAME="format" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The MIME type of the resource, in accordance with IANA Media Types."/>
+        <FIELD NAME="type" TYPE="char" LENGTH="40" NOTNULL="false" SEQUENCE="false" COMMENT="One of the Dublin Core Metadata Initiative Type Vocabulary types."/>
+        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="title" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The name given to the resource, usually by the creator or publisher."/>
+        <FIELD NAME="subject" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The topic of the resource.  Typically, subject will be expressed as keywords or phrases that describe the subject or content of the resource."/>
+        <FIELD NAME="creator" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" COMMENT="The person or organization primarily responsible for creating the intellectual content of the resource this metadata represents."/>
+        <FIELD NAME="contributor" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Persons or organizations not specified in the creator who have made significant intellectual contributions to the resource but whose contribution is secondary to any person or organization specified in creator."/>
+        <FIELD NAME="publisher" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The entity responsible for making the resource available in its present form, such as a publishing house, a university department, or a corporate entity."/>
+        <FIELD NAME="rights" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="A rights management statement, an identifier that links to a rights management statement, or an identifier that links to a service providing information about rights management for the resource."/>
+        <FIELD NAME="language" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Language of the resource."/>
+        <FIELD NAME="date" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The epoch of date/time when the resource was created."/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+        <KEY NAME="contenthash" TYPE="unique" FIELDS="contenthash"/>
+      </KEYS>
+    </TABLE>
+  </TABLES>
+</XMLDB>

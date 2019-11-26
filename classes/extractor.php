@@ -17,6 +17,7 @@
 namespace metadataextractor_tika;
 
 use stored_file;
+use tool_metadata\extraction_exception;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -28,7 +29,88 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-class extractor implements \tool_metadata\extractor_strategy {
+class extractor extends \tool_metadata\extractor implements \tool_metadata\extractor_strategy {
+
+    /**
+     * Metadata type - An aggregation of resources.
+     */
+    const DCMI_TYPE_COLLECTION = 'collection';
+
+    /**
+     * Metadata type - Data encoded in a defined structure.
+     */
+    const DCMI_TYPE_DATASET = 'dataset';
+
+    /**
+     * Metadata type - A non-persistent, time-based occurrence.
+     */
+    const DCMI_TYPE_EVENT = 'event';
+
+    /**
+     * Metadata type - A resource requiring interaction from the user to be understood, executed, or experienced.
+     */
+    const DCMI_TYPE_INTERACTIVE = 'interactiveresource';
+
+    /**
+     * Metadata type - A visual representation other than text.
+     */
+    const DCMI_TYPE_IMAGE = 'image';
+
+    /**
+     * Metadata type - A series of visual representations imparting an impression of motion when shown in succession.
+     */
+    const DCMI_TYPE_MOVINGIMAGE = 'movingimage';
+
+    /**
+     * Metadata type - An inanimate, three-dimensional object or substance.
+     */
+    const DCMI_TYPE_PHYSICAL = 'physicalobject';
+
+    /**
+     * Metadata type - A system that provides one or more functions.
+     */
+    const DCMI_TYPE_SERVICE = 'service';
+
+    /**
+     * Metadata type - A computer program in source or compiled form.
+     */
+    const DCMI_TYPE_SOFTWARE = 'software';
+
+    /**
+     * Metadata type - A resource primarily intended to be heard.
+     */
+    const DCMI_TYPE_SOUND = 'sound';
+
+    /**
+     * Metadata type - A static visual representation.
+     */
+    const DCMI_TYPE_STILLIMAGE = 'stillimage';
+
+    /**
+     * Metadata type - A resource consisting primarily of words for reading.
+     */
+    const DCMI_TYPE_TEXT = 'text';
+
+    /**
+     * The plugin name.
+     */
+    const METADATAEXTRACTOR_NAME = 'tika';
+
+    /**
+     * Table name for storing extracted metadata for this extractor.
+     */
+    const METADATA_TABLE = 'metadataextractor_tika';
+
+    /**
+     * A map of the Moodle mimetype groups to DCMI types.
+     */
+    const DCMI_TYPE_MIMETYPE_GROUP_MAP = [
+        self::DCMI_TYPE_MOVINGIMAGE => ['video', 'html_video', 'web_video'],
+        self::DCMI_TYPE_SOUND => ['audio', 'html_audio', 'web_audio', 'html_track'],
+        self::DCMI_TYPE_IMAGE => ['image', 'web_image'],
+        self::DCMI_TYPE_COLLECTION => ['archive'],
+        self::DCMI_TYPE_TEXT => ['web_file', 'document', 'spreadsheet', 'presentation'],
+    ];
 
     /**
      * @var string path to jar file for executing tika commands.
@@ -42,14 +124,17 @@ class extractor implements \tool_metadata\extractor_strategy {
     }
 
     /**
-     * Create metadata in the {metadata} table and return a metadata object or false if metadata could not be created.
+     * Attempt to create file metadata.
      *
      * @param \stored_file $file the file to create metadata for.
+     * @throws \tool_metadata\extraction_exception
      *
-     * @return \tool_metadata\metadata_model|false an instance of the metadata model or one of its' children.
+     * @return bool true if metadata successfully extracted, false otherwise.
      */
-    public function create_metadata(stored_file $file){
+    public function create_file_metadata(stored_file $file){
         global $DB;
+
+        $success = false;
 
         $fs = get_file_storage();
         $filesystem = $fs->get_file_system();
@@ -65,22 +150,24 @@ class extractor implements \tool_metadata\extractor_strategy {
                 // into php stdClass (eg. 'Content-Type').
                 $metadataarray = json_decode($rawmetadata, true);
             } else {
-                return $metadata;
+                throw new extraction_exception('error:extractionfailed', 'tool_metadata');
             }
 
             if ($metadataarray) {
                 $metadataobject = $this->build_metadata($metadataarray, $file);
-                $result = $DB->insert_record('tool_metadata', $metadataobject);
+                if ($this->get_metadata_id($file->get_contenthash())) {
+                    $result = $DB->insert_record(self::METADATA_TABLE, $metadataobject);
+                } else {
+                    $result = $DB->update_record(self::METADATA_TABLE, $metadataobject);
+                }
                 if ($result) {
-                    $metadata = $metadataobject;
+                    $success = true;
+                } else {
+                    throw new extraction_exception('error:extractionfieldparse');
                 }
             }
-
-        } else {
-            print_error('Can not create metadata for a directory');
         }
-
-        return $metadata;
+        return $success;
     }
 
     /**
@@ -93,75 +180,23 @@ class extractor implements \tool_metadata\extractor_strategy {
      */
     public function build_metadata($rawmetadataarray, stored_file $file) {
         $metadata = new metadata();
-        $metadata->filecontenthash = $file->get_contenthash();
+        $metadata->contenthash = $file->get_contenthash();
         $metadata->format = (isset($rawmetadataarray['Content-Type'])) ? ($rawmetadataarray['Content-Type']) : null;
-        // TODO: Fix `type` to determine a \tool_metadata\metadata_model::DCMI_TYPE.
+        // TODO: Fix `type` to determine a \tool_metadata\DCMI_TYPE.
         $metadata->type = pathinfo($file->get_filename(), PATHINFO_EXTENSION);
         $metadata->description = (isset($rawmetadataarray['dc:description'])) ? ($rawmetadataarray['dc:description']) : null;
         $metadata->title = (isset($rawmetadataarray['dc:title'])) ? ($rawmetadataarray['dc:title']) : null;
         $metadata->creator = (isset($rawmetadataarray['meta:author'])) ? ($rawmetadataarray['meta:author']) : null;
-        $metadata->creationdate = (isset($rawmetadataarray['meta:creation-date'])) ? strtotime($rawmetadataarray['meta:creation-date']) : null;
+        $metadata->date = (isset($rawmetadataarray['meta:creation-date'])) ? strtotime($rawmetadataarray['meta:creation-date']) : null;
         $metadata->contributor = (isset($rawmetadataarray['meta:last-author'])) ? ($rawmetadataarray['meta:last-author"']) : null;
         $metadata->subject = (isset($rawmetadataarray['subject'])) ? ($rawmetadataarray['subject']) : null;
         $metadata->publisher = (isset($rawmetadataarray['publisher'])) ? ($rawmetadataarray['publisher']) : null;
         $metadata->rights = $file->get_license();
-        $metadata->extractor = self::class;
+        $metadata->language = null;
         $metadata->timecreated = time();
         $metadata->timemodified = time();
 
         return $metadata;
-    }
-
-    /**
-     * Return a metadata model for a stored_file resource.
-     *
-     * @param \stored_file $file
-     *
-     * @return false|\metadataextractor_tika\metadata_model
-     */
-    public function read_metadata(stored_file $file) {
-        global $DB;
-
-        $record = $DB->get_record('tool_metadata', [
-            'filecontenthash' => $file->get_contenthash(),
-            'extractor' => self::class
-        ]);
-
-        if ($record) {
-            $metadata = metadata::create_instance($record);
-        } else {
-            $metadata = $this->create_metadata($file);
-        }
-
-        return $metadata;
-
-    }
-
-    /**
-     * Update the metadata for a stored file.
-     *
-     * @param \stored_file $file
-     */
-    public function update_metadata(stored_file $file) {
-        // TODO: Implement an update method for when a stored file is modified.
-    }
-
-    /**
-     * Delete metadata records from the database for a stored_file.
-     *
-     * @param \stored_file $file
-     */
-    public function delete_metadata(stored_file $file){
-        // TODO: Implement this method to allow removal of records when files are deleted.
-    }
-
-    /**
-     * Get all file extensions supported by the implementing class.
-     *
-     * @return array listing all supported file extensions.
-     */
-    public function get_supported_file_extensions() {
-        // TODO: Add a check for supported file extensions to $this->create_metadata.
     }
 
     /**

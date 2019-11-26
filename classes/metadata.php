@@ -35,7 +35,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright  2019 Tom Dickman <tomdickman@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class metadata extends \tool_metadata\metadata_model {
+class metadata implements \tool_metadata\metadata {
 
     public static function create_instance($metadataobject) {
         $instance = new self;
@@ -49,4 +49,25 @@ class metadata extends \tool_metadata\metadata_model {
         return $instance;
     }
 
+    /**
+     * metadata constructor.
+     *
+     * @param mixed $record a fieldset object of raw metadata values.
+     */
+    public function __construct($record) {
+    }
+
+    /**
+     * @return array of all contained metadata as [ $key => $value ].
+     */
+    public function get_associative_array() {
+        // TODO: Implement get_associative_array() method.
+    }
+
+    /**
+     * @return string json representation of metadata.
+     */
+    public function get_json() {
+        // TODO: Implement get_json() method.
+    }
 }
