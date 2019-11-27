@@ -18,7 +18,7 @@
         <FIELD NAME="publisher" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The entity responsible for making the resource available in its present form, such as a publishing house, a university department, or a corporate entity."/>
         <FIELD NAME="rights" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="A rights management statement, an identifier that links to a rights management statement, or an identifier that links to a service providing information about rights management for the resource."/>
         <FIELD NAME="language" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Language of the resource."/>
-        <FIELD NAME="date" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The epoch of date/time when the resource was created."/>
+        <FIELD NAME="date" TYPE="char" LENGTH="100" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The date/time when the resource was created."/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>

@@ -109,39 +109,17 @@ class metadata extends \tool_metadata\metadata {
     protected static function metadata_key_map() {
 
         return [
-            'format' => [
-                'keys' => ['dc:format', 'Content-Type'],
-            ],
-            'type' => [
-                'keys' => ['dc:type'],
-            ],
-            'description' => [
-                'keys' => ['dc:description', 'Description'],
-            ],
-            'title' =>  [
-                'keys' => ['dc:title', 'Title', 'meta:title', 'pdf:title'],
-            ],
-            'creator' =>  [
-                'keys' => ['dc:creator', 'Creator', 'meta:creator', 'Author', 'meta:author'],
-            ],
-            'date' =>  [
-                'keys' => ['dc:date', 'Creation-Date', 'meta:creation-date'],
-                'functions' => ['str']
-            ],
-            'contributor' =>  [
-                'keys' => ['dc:contributor', 'meta:last-author'],
-            ],
-            'subject' =>  [
-                'keys' => ['dc:subject', 'Subject', 'subject', 'meta:subject'],
-            ],
-            'publisher' =>  [
-                'keys' => ['dc:publisher', 'Publisher', 'publisher', 'meta:publisher'],
-            ],
-            'rights' =>  [
-                'keys' => ['dc:rights', 'Rights', 'rights', 'meta:rights', 'License', 'license', 'meta:license'],
-            ],
+            'format' => ['dc:format', 'Content-Type'],
+            'type' => ['dc:type'],
+            'description' => ['dc:description', 'Description'],
+            'title' => ['dc:title', 'Title', 'meta:title', 'pdf:title'],
+            'creator' => ['dc:creator', 'Creator', 'meta:creator', 'Author', 'meta:author'],
+            'date' => ['dc:date', 'Creation-Date', 'meta:creation-date'],
+            'contributor' => ['dc:contributor', 'meta:last-author'],
+            'subject' => ['dc:subject', 'Subject', 'subject', 'meta:subject'],
+            'publisher' => ['dc:publisher', 'Publisher', 'publisher', 'meta:publisher'],
+            'rights' => ['dc:rights', 'Rights', 'rights', 'meta:rights', 'License', 'license', 'meta:license'],
             'language' => ['dc:language', 'Language', 'language', 'meta:language'],
         ];
-
     }
 }
