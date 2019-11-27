@@ -16,7 +16,6 @@
 
 namespace metadataextractor_tika;
 
-use stdClass;
 use stored_file;
 use tool_metadata\extraction_exception;
 
@@ -156,7 +155,7 @@ class extractor extends \tool_metadata\extractor implements \tool_metadata\extra
 
             if ($metadataarray) {
                 if ($id = $this->get_metadata_id($file->get_contenthash())) {
-                    $metadataarray->id = $id;
+                    $metadataarray['id'] = $id;
                     $metadata = new metadata($file->get_contenthash(), $metadataarray, true);
                     $record = $DB->update_record(self::METADATA_TABLE, $metadata);
                 } else {
