@@ -35,39 +35,113 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright  2019 Tom Dickman <tomdickman@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class metadata implements \tool_metadata\metadata {
-
-    public static function create_instance($metadataobject) {
-        $instance = new self;
-
-        foreach (get_object_vars($metadataobject) as $key => $value) {
-            if ($key != 'id'){
-                $instance->$key = $value;
-            }
-        }
-
-        return $instance;
-    }
+class metadata extends \tool_metadata\metadata {
 
     /**
-     * metadata constructor.
-     *
-     * @param mixed $record a fieldset object of raw metadata values.
+     * @var string A SHA1 hash of the content for the resource this metadata applies to.
      */
-    public function __construct($record) {
-    }
+    public $contenthash;
 
     /**
-     * @return array of all contained metadata as [ $key => $value ].
+     * @var string The person or organization primarily responsible for creating the
+     * intellectual content of the resource this metadata represents.
      */
-    public function get_associative_array() {
-        // TODO: Implement get_associative_array() method.
-    }
+    public $creator;
+    /**
+     * @var array (string) Persons or organizations not specified in the creator who have
+     * made significant intellectual contributions to the resource but whose contribution
+     * is secondary to any person or organization specified in creator.
+     */
+    public $contributor;
+    /**
+     * @var int A UNIX epoch for date/time associated with the creation or availability of the resource.
+     */
+    public $creationdate;
+    /**
+     * @var string The MIME type of the resource, in accordance with IANA Media Types.
+     * https://www.iana.org/assignments/media-types/media-types.xhtml
+     */
+    public $format;
+    /**
+     * @var string One of the Dublic Core Metadata Initiative types available in the DCMI_TYPE constants.
+     * https://www.dublincore.org/specifications/dublin-core/dcmi-type-vocabulary/2010-10-11/
+     */
+    public $type;
+    /**
+     * @var string The name given to the resource, usually by the creator or publisher.
+     */
+    public $title;
+    /**
+     * @var string The topic of the resource.  Typically, subject will be expressed as
+     * keywords or phrases that describe the subject or content of the resource.
+     */
+    public $subject;
+    /**
+     * @var string A textual description of the content of the resource.
+     */
+    public $description;
+    /**
+     * @var string The entity responsible for making the resource available in its
+     * present form, such as a publishing house, a university department, or a corporate entity.
+     */
+    public $publisher;
+    /**
+     * @var string A rights management statement, an identifier that links to a rights management statement,
+     * or an identifier that links to a service providing information about rights management for the resource.
+     */
+    public $rights;
 
     /**
-     * @return string json representation of metadata.
+     * @var string The language of the resource.
      */
-    public function get_json() {
-        // TODO: Implement get_json() method.
+    public $language;
+
+    /**
+     * @var int The UNIX timestamp of when instance was created.
+     */
+    public $timecreated;
+
+    /**
+     * @var int The UNIX timestamp of when instance was last modified.
+     */
+    public $timemodified;
+
+    protected static function metadata_key_map() {
+
+        return [
+            'format' => [
+                'keys' => ['dc:format', 'Content-Type'],
+            ],
+            'type' => [
+                'keys' => ['dc:type'],
+            ],
+            'description' => [
+                'keys' => ['dc:description', 'Description'],
+            ],
+            'title' =>  [
+                'keys' => ['dc:title', 'Title', 'meta:title', 'pdf:title'],
+            ],
+            'creator' =>  [
+                'keys' => ['dc:creator', 'Creator', 'meta:creator', 'Author', 'meta:author'],
+            ],
+            'date' =>  [
+                'keys' => ['dc:date', 'Creation-Date', 'meta:creation-date'],
+                'functions' => ['str']
+            ],
+            'contributor' =>  [
+                'keys' => ['dc:contributor', 'meta:last-author'],
+            ],
+            'subject' =>  [
+                'keys' => ['dc:subject', 'Subject', 'subject', 'meta:subject'],
+            ],
+            'publisher' =>  [
+                'keys' => ['dc:publisher', 'Publisher', 'publisher', 'meta:publisher'],
+            ],
+            'rights' =>  [
+                'keys' => ['dc:rights', 'Rights', 'rights', 'meta:rights', 'License', 'license', 'meta:license'],
+            ],
+            'language' => ['dc:language', 'Language', 'language', 'meta:language'],
+        ];
+
     }
 }
