@@ -148,7 +148,7 @@ class extractor extends \tool_metadata\extractor implements \tool_metadata\extra
             // into php stdClass (eg. 'Content-Type').
             $metadataarray = json_decode($rawmetadata, true);
         } else {
-            throw new extraction_exception('error:extractionfailed', 'tool_metadata');
+            throw new extraction_exception('error:extractionfailed');
         }
 
         if ($metadataarray) {
