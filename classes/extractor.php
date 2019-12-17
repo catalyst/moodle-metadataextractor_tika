@@ -102,6 +102,16 @@ class extractor extends \tool_metadata\extractor implements \tool_metadata\extra
     const METADATA_TABLE = 'metadataextractor_tika';
 
     /**
+     * Local Tika service type: Java and a Tika application jar are installed locally, plugin will use direct commands to CLI.
+     */
+    const SERVICETYPE_LOCAL = 'local';
+
+    /**
+     * Server Tika service type: Tika is being run on a server, plugin will communicate via Tika REST API endpoint.
+     */
+    const SERVICETYPE_SERVER = 'server';
+
+    /**
      * A map of the Moodle mimetype groups to DCMI types.
      */
     const DCMI_TYPE_MIMETYPE_GROUP_MAP = [
@@ -112,15 +122,7 @@ class extractor extends \tool_metadata\extractor implements \tool_metadata\extra
         self::DCMI_TYPE_TEXT => ['web_file', 'document', 'spreadsheet', 'presentation'],
     ];
 
-    /**
-     * @var string path to jar file for executing tika commands.
-     */
-    private $path;
-
     public function __construct() {
-        global $CFG;
-
-        $this->path = $CFG->pathtotika;
     }
 
     /**
@@ -131,24 +133,54 @@ class extractor extends \tool_metadata\extractor implements \tool_metadata\extra
      *
      * @return \metadataextractor_tika\metadata|false a metadata object instance or false if no metadata.
      */
-    public function create_file_metadata(stored_file $file){
-        global $DB;
+    public function create_file_metadata(stored_file $file) {
+        global $CFG;
 
         $result = false;
+
+        if (!empty($CFG->tikaservicetype)) {
+            switch ($CFG->tikaservicetype) {
+                case self::SERVICETYPE_LOCAL :
+                    $result = $this->create_file_metadata_local($file);
+                    break;
+                case self::SERVICETYPE_SERVER :
+                    $result = $this->created_file_metadata_server($file);
+                    break;
+                default :
+                    throw new extraction_exception('error:invalidservicetype');
+                    break;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Create file metadata using the locally installed tika-app.
+     *
+     * @param \stored_file $file
+     *
+     * @return \metadataextractor_tika\metadata
+     * @throws \tool_metadata\extraction_exception
+     */
+    private function create_file_metadata_local(stored_file $file) {
+        global $DB, $CFG;
 
         $fs = get_file_storage();
         $filesystem = $fs->get_file_system();
 
         $localpath = $filesystem->get_local_path_from_storedfile($file, true);
-        $cmd = 'java -jar ' . $this->path . ' -j ' . $localpath;
-        $rawmetadata = shell_exec($cmd);
+        if (!empty($CFG->tikalocalpath)) {
+            $cmd = 'java -jar ' . $CFG->tikalocalpath . ' -j ' . $localpath;
+            $rawmetadata = shell_exec($cmd);
+        } else {
+            throw new extraction_exception('error:tikapathnotset', 'metadataextrator_tika');
+        }
 
         if ($rawmetadata) {
             // Use associative array as some key names may not parse well
             // into php stdClass (eg. 'Content-Type').
             $metadataarray = json_decode($rawmetadata, true);
-        } else {
-            throw new extraction_exception('error:extractionfailed');
         }
 
         if ($metadataarray) {
@@ -164,12 +196,16 @@ class extractor extends \tool_metadata\extractor implements \tool_metadata\extra
                 $metadata->id = $id;
             }
             if (!empty($updated) || !empty($id)) {
-                $result = $metadata;
-            } else {
-                throw new extraction_exception('error:extractionfieldparse');
+                // Success, return the metadata instance for the stored data.
+                return $metadata;
             }
         }
-        return $result;
+        throw new extraction_exception('error:extractionfailed');
+    }
+
+
+    private function create_file_metadata_server(stored_file $file) {
+        // TODO: Add support for making REST API calls to Tika server.
     }
 
     /**
@@ -196,5 +232,4 @@ class extractor extends \tool_metadata\extractor implements \tool_metadata\extra
             }
         }
     }
-
 }

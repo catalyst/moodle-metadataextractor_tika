@@ -29,9 +29,38 @@ if ($hassiteconfig) {
     $settings->add(new admin_setting_heading('tikasettings',
         get_string('settings:heading', 'metadataextractor_tika'), ''));
 
-    $settings->add(new admin_setting_configtext('pathtotika',
-        get_string('settings:pathtotika', 'metadataextractor_tika'),
-        get_string('settings:pathtotika_help', 'metadataextractor_tika'),
-        '/usr/bin/tika-app-1.22.jar'));
+    $tikaservicetypes = [
+        \metadataextractor_tika\extractor::SERVICETYPE_LOCAL => get_string('setting:tikaservicetype:local', 'metadataextractor_tika'),
+        \metadataextractor_tika\extractor::SERVICETYPE_SERVER => get_string('setting:tikaservicetype:server', 'metadataextractor_tika')
+    ];
+    
+    $settings->add(new admin_setting_configselect('tikaservicetype',
+        get_string('settings:tikaservicetype', 'metadataextractor_tika'),
+        get_string('settings:tikaservicetype_desc', 'metadataextractor_tika'),
+        \metadataextractor_tika\extractor::SERVICETYPE_LOCAL, $tikaservicetypes));
 
+    if ($CFG->tikaservicetype == \metadataextractor_tika\extractor::SERVICETYPE_LOCAL) {
+        $settings->add(new admin_setting_heading('tikalocalsettings',
+            get_string('settings:local:heading', 'metadataextractor_tika'), ''));
+
+        $settings->add(new admin_setting_configtext('tikalocalpath',
+            get_string('settings:local:pathtotika', 'metadataextractor_tika'),
+            get_string('settings:local:pathtotika_help', 'metadataextractor_tika'),
+            '/usr/bin/tika-app-1.22.jar'));
+
+    } elseif ($CFG->tikaservicetype == \metadataextractor_tika\extractor::SERVICETYPE_SERVER) {
+        $settings->add(new admin_setting_heading('tikaserversettings',
+            get_string('settings:server:heading', 'metadataextractor_tika'), ''));
+
+        $settings->add(new admin_setting_configtext('tikaserverhost',
+            get_string('settings:server:host', 'metadataextractor_tika'),
+            get_string('settings:server:host_help', 'metadataextractor_tika'),
+            $CFG->wwwroot, PARAM_URL));
+
+        $settings->add(new admin_setting_configtext('tikaserverport',
+            get_string('settings:server:port', 'metadataextractor_tika'),
+            get_string('settings:server:port_help', 'metadataextractor_tika'),
+            9998, PARAM_INT));
+
+    }
 }
