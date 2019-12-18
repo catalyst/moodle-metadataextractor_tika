@@ -37,11 +37,13 @@ $string['settings:server:port'] = 'Tika port';
 $string['settings:server:port_help'] = 'The port of the Apache Tika server endpoint';
 $string['settings:tikaservicetype'] = 'Service type';
 $string['settings:tikaservicetype_desc'] = "The type of Tika service implementation:\n
-Local Tika install - Tika app installed on Moodle server (requires Java install)\n
-Tika server - Use REST API calls to Tika server";
+Local Tika application - Tika app installed on Moodle server (requires Java install)\n
+Tika server - Use REST API calls to a Tika server";
 $string['setting:tikaservicetype:server'] = 'Tika server';
 $string['setting:tikaservicetype:local'] = 'Local Tika application';
 
 // Error strings.
 $string['error:tikapathnotset'] = 'Path to Tika application jar not set.';
 $string['error:invalidservicetype'] = 'Invalid Tika service type set.';
+$string['error:server:nohostset'] = 'No Tika server hostname or IP address set.';
+$string['error:server:httprequest'] = 'Error attempting to communicate with Tika server.';
