@@ -39,7 +39,7 @@ if ($hassiteconfig) {
         get_string('settings:tikaservicetype_desc', 'metadataextractor_tika'),
         \metadataextractor_tika\extractor::SERVICETYPE_LOCAL, $tikaservicetypes));
 
-    if ($CFG->tikaservicetype == \metadataextractor_tika\extractor::SERVICETYPE_LOCAL) {
+    if (!empty($CFG->tikaservicetype) && $CFG->tikaservicetype == \metadataextractor_tika\extractor::SERVICETYPE_LOCAL) {
         $settings->add(new admin_setting_heading('tikalocalsettings',
             get_string('settings:local:heading', 'metadataextractor_tika'), ''));
 
@@ -48,7 +48,7 @@ if ($hassiteconfig) {
             get_string('settings:local:pathtotika_help', 'metadataextractor_tika'),
             '/usr/bin/tika-app-1.22.jar'));
 
-    } elseif ($CFG->tikaservicetype == \metadataextractor_tika\extractor::SERVICETYPE_SERVER) {
+    } elseif (!empty($CFG->tikaservicetype) && $CFG->tikaservicetype == \metadataextractor_tika\extractor::SERVICETYPE_SERVER) {
         $settings->add(new admin_setting_heading('tikaserversettings',
             get_string('settings:server:heading', 'metadataextractor_tika'), ''));
 
