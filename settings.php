@@ -43,7 +43,7 @@ if ($hassiteconfig) {
         $settings->add(new admin_setting_heading('tikalocalsettings',
             get_string('settings:local:heading', 'metadataextractor_tika'), ''));
 
-        $settings->add(new admin_setting_configtext('tikalocalpath',
+        $settings->add(new admin_setting_configfile('tikalocalpath',
             get_string('settings:local:pathtotika', 'metadataextractor_tika'),
             get_string('settings:local:pathtotika_help', 'metadataextractor_tika'),
             '/usr/bin/tika-app-1.22.jar'));

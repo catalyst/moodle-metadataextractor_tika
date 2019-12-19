@@ -64,6 +64,13 @@ class server {
             throw new extraction_exception('error:server:nohostset', 'metadataextractor_tika');
         }
 
+        // Check that local_aws plugin is installed as this is a dependency for tika server configuration.
+        $dependencyinfo = \core_plugin_manager::instance()->get_plugin_info('local_aws');
+        if (empty($dependencyinfo)) {
+            throw new extraction_exception('error:server:missingdependency', 'metadataextractor_tika', '',
+                'local_aws');
+        }
+
         $params = ['base_uri' => $baseuri];
 
         if (!empty($handlerstack)) {

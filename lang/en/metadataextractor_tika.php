@@ -43,7 +43,8 @@ $string['setting:tikaservicetype:server'] = 'Tika server';
 $string['setting:tikaservicetype:local'] = 'Local Tika application';
 
 // Error strings.
-$string['error:tikapathnotset'] = 'Path to Tika application jar not set.';
 $string['error:invalidservicetype'] = 'Invalid Tika service type set.';
+$string['error:tikapathnotset'] = 'Path to Tika application jar not set.';
+$string['error:server:missingdependency'] = 'Missing Tika server plugin dependency: {$a}.';
 $string['error:server:nohostset'] = 'No Tika server hostname or IP address set.';
 $string['error:server:httprequest'] = 'Error attempting to communicate with Tika server.';

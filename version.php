@@ -28,6 +28,3 @@ $plugin->version   = 2019121800;        // The current plugin version (Date: YYY
 $plugin->requires  = 2019110500;        // Requires this Moodle version
 $plugin->component = 'metadataextractor_tika';        // Full name of the plugin (used for diagnostics)
 $plugin->maturity = MATURITY_ALPHA;
-$plugin->dependencies = array(
-    'local_aws' => 2017030100
-);
