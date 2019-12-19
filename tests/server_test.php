@@ -38,6 +38,12 @@ class server_test extends advanced_testcase {
 
         set_config('tikaserverhost', 'localhost');
         set_config('tikaserverport', 9998);
+
+        $dependencyinfo = \core_plugin_manager::instance()->get_plugin_info('local_aws');
+        // Skip server tests if local_aws plugin dependency isn't installed as exceptions will be thrown.
+        if (empty($dependencyinfo)) {
+            $this->markTestSkipped(get_string('error:server:missingdependency', 'metadataextractor_tika', 'local_aws'));
+        }
     }
 
     public function test_new_server() {
