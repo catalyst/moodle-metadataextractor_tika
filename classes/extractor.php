@@ -14,6 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Class for extraction of metadata using Apache Tika.
+ *
+ * @package    metadataextractor_tika
+ * @copyright  2019 Tom Dickman <tomdickman@catalyst-au.net>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 namespace metadataextractor_tika;
 
 use stored_file;
@@ -22,13 +30,12 @@ use tool_metadata\extraction_exception;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Interface describing the strategy for extracting metadata from a Moodle stored_file resource.
+ * Class for extraction of metadata using Apache Tika.
  *
  * @package    metadataextractor_tika
  * @copyright  2019 Tom Dickman <tomdickman@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 class extractor extends \tool_metadata\extractor implements \tool_metadata\extractor_strategy {
 
     /**
@@ -102,6 +109,16 @@ class extractor extends \tool_metadata\extractor implements \tool_metadata\extra
     const METADATA_TABLE = 'metadataextractor_tika';
 
     /**
+     * Local Tika service type: Java and a Tika application jar are installed locally, plugin will use direct commands to CLI.
+     */
+    const SERVICETYPE_LOCAL = 'local';
+
+    /**
+     * Server Tika service type: Tika is being run on a server, plugin will communicate via Tika REST API endpoint.
+     */
+    const SERVICETYPE_SERVER = 'server';
+
+    /**
      * A map of the Moodle mimetype groups to DCMI types.
      */
     const DCMI_TYPE_MIMETYPE_GROUP_MAP = [
@@ -112,15 +129,7 @@ class extractor extends \tool_metadata\extractor implements \tool_metadata\extra
         self::DCMI_TYPE_TEXT => ['web_file', 'document', 'spreadsheet', 'presentation'],
     ];
 
-    /**
-     * @var string path to jar file for executing tika commands.
-     */
-    private $path;
-
     public function __construct() {
-        global $CFG;
-
-        $this->path = $CFG->pathtotika;
     }
 
     /**
@@ -131,27 +140,31 @@ class extractor extends \tool_metadata\extractor implements \tool_metadata\extra
      *
      * @return \metadataextractor_tika\metadata|false a metadata object instance or false if no metadata.
      */
-    public function create_file_metadata(stored_file $file){
-        global $DB;
+    public function create_file_metadata(stored_file $file) {
+        global $CFG, $DB;
 
         $result = false;
 
-        $fs = get_file_storage();
-        $filesystem = $fs->get_file_system();
-
-        $localpath = $filesystem->get_local_path_from_storedfile($file, true);
-        $cmd = 'java -jar ' . $this->path . ' -j ' . $localpath;
-        $rawmetadata = shell_exec($cmd);
-
-        if ($rawmetadata) {
+        if (!empty($CFG->tikaservicetype)) {
+            switch ($CFG->tikaservicetype) {
+                case self::SERVICETYPE_LOCAL :
+                    $rawmetadata = $this->create_file_metadata_local($file);
+                    break;
+                case self::SERVICETYPE_SERVER :
+                    $rawmetadata = $this->create_file_metadata_server($file);
+                    break;
+                default :
+                    throw new extraction_exception('error:invalidservicetype');
+                    break;
+            }
+        }
+        if (!empty($rawmetadata)) {
             // Use associative array as some key names may not parse well
             // into php stdClass (eg. 'Content-Type').
             $metadataarray = json_decode($rawmetadata, true);
-        } else {
-            throw new extraction_exception('error:extractionfailed');
         }
 
-        if ($metadataarray) {
+        if (!empty($metadataarray) && is_array($metadataarray)) {
             $existingmetadata = $this->read_metadata($file->get_contenthash());
             if ($existingmetadata) {
                 $metadataarray['id'] = $existingmetadata->id;
@@ -164,22 +177,70 @@ class extractor extends \tool_metadata\extractor implements \tool_metadata\extra
                 $metadata->id = $id;
             }
             if (!empty($updated) || !empty($id)) {
+                // Success, return the metadata instance for the stored data.
                 $result = $metadata;
             } else {
-                throw new extraction_exception('error:extractionfieldparse');
+                throw new extraction_exception('error:extractionfailed');
             }
         }
+
         return $result;
     }
 
     /**
-     * Get content from a stored file.
+     * Create file metadata using the locally installed tika-app.
+     *
+     * @param \stored_file $file
+     *
+     * @return string|false $result json encoded metadata or false if metadata could not be extracted.
+     * @throws \tool_metadata\extraction_exception
+     */
+    private function create_file_metadata_local(stored_file $file) {
+        global $CFG;
+
+        $fs = get_file_storage();
+        $filesystem = $fs->get_file_system();
+
+        $localpath = $filesystem->get_local_path_from_storedfile($file, true);
+        if (!empty($CFG->tikalocalpath)) {
+            $cmd = 'java -jar ' . $CFG->tikalocalpath . ' -j ' . $localpath;
+            $rawmetadata = shell_exec($cmd);
+        } else {
+            throw new extraction_exception('error:tikapathnotset', 'metadataextractor_tika');
+        }
+
+        if (!empty($rawmetadata)) {
+            $result = $rawmetadata;
+        } else {
+            $result = false;
+        }
+        return $result;
+    }
+
+
+    /**
+     * Create file metadata using a tika server.
+     *
+     * @param \stored_file $file
+     *
+     * @return string|false $result json encoded metadata or false if metadata could not be extracted.
+     * @throws \tool_metadata\extraction_exception
+     */
+    private function create_file_metadata_server(stored_file $file) {
+        $server = new server();
+        $result = $server->get_file_metadata($file);
+
+        return $result;
+    }
+
+    /**
+     * Get content from a stored file using the locally installed tika-app.
      *
      * @param \stored_file $file
      *
      * @return bool|string
      */
-    public function get_content(stored_file $file) {
+    public function get_file_content_local(stored_file $file) {
         $fs = get_file_storage();
         $filesystem = $fs->get_file_system();
 
@@ -196,5 +257,4 @@ class extractor extends \tool_metadata\extractor implements \tool_metadata\extra
             }
         }
     }
-
 }
