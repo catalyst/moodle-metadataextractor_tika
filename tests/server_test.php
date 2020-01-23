@@ -36,8 +36,8 @@ class server_test extends advanced_testcase {
     public function setUp() {
         $this->resetAfterTest();
 
-        set_config('tikaserverhost', 'localhost');
-        set_config('tikaserverport', 9998);
+        set_config('tikaserverhost', 'localhost', 'tool_metadata_tika');
+        set_config('tikaserverport', 9998, 'tool_metadata_tika');
 
         $dependencyinfo = \core_plugin_manager::instance()->get_plugin_info('local_aws');
         // Skip server tests if local_aws plugin dependency isn't installed as exceptions will be thrown.
@@ -48,8 +48,8 @@ class server_test extends advanced_testcase {
 
     public function test_new_server() {
 
-        unset_config('tikaserverhost');
-        unset_config('tikaserverport');
+        unset_config('tikaserverhost', 'tool_metadata_tika');
+        unset_config('tikaserverport', 'tool_metadata_tika');
 
         // Expect an exception to be thrown when there is no tika server hostname configured.
         $this->expectException(\tool_metadata\extraction_exception::class);
@@ -73,6 +73,8 @@ class server_test extends advanced_testcase {
         $filecontent = json_encode(['Content-Type' => 'application/pdf']);
         $file = $fs->create_file_from_string($filerecord, $filecontent);
 
+        $tikaserverhost = get_config('tool_metadata_tika', 'tikaserverhost');
+        $tikaserverport = get_config('tool_metadata_tika', 'tikaserverport');
         // Add mock responses to the handlerstack.
         $mock = new \GuzzleHttp\Handler\MockHandler([
             new \GuzzleHttp\Psr7\Response(200,
@@ -84,7 +86,7 @@ class server_test extends advanced_testcase {
             ),
             new \GuzzleHttp\Exception\ConnectException('connection error',
                 new \GuzzleHttp\Psr7\Request('POST',
-                $CFG->tikaserverhost . ':' . $CFG->tikaserverport . '/meta/form'))
+                $tikaserverhost . ':' . $tikaserverport . '/meta/form'))
         ]);
         $handlerstack = \GuzzleHttp\HandlerStack::create($mock);
 

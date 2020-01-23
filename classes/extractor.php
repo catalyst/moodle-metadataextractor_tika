@@ -145,8 +145,9 @@ class extractor extends \tool_metadata\extractor implements \tool_metadata\extra
 
         $result = false;
 
-        if (!empty($CFG->tikaservicetype)) {
-            switch ($CFG->tikaservicetype) {
+        $tikaservicetype = get_config('tool_metadata_tika', 'tikaservicetype');
+        if (!empty($tikaservicetype)) {
+            switch ($tikaservicetype) {
                 case self::SERVICETYPE_LOCAL :
                     $rawmetadata = $this->create_file_metadata_local($file);
                     break;
@@ -202,8 +203,10 @@ class extractor extends \tool_metadata\extractor implements \tool_metadata\extra
         $filesystem = $fs->get_file_system();
 
         $localpath = $filesystem->get_local_path_from_storedfile($file, true);
-        if (!empty($CFG->tikalocalpath)) {
-            $cmd = 'java -jar ' . $CFG->tikalocalpath . ' -j ' . $localpath;
+
+        $tikalocalpath = get_config('tool_metadata_tika', 'tikalocalpath');
+        if (!empty($tikalocalpath)) {
+            $cmd = 'java -jar ' . $tikalocalpath . ' -j ' . $localpath;
             $rawmetadata = shell_exec($cmd);
         } else {
             throw new extraction_exception('error:tikapathnotset', 'metadataextractor_tika');

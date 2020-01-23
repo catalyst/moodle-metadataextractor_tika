@@ -53,12 +53,12 @@ class server {
      * @throws \tool_metadata\extraction_exception
      */
     public function __construct($handlerstack = null) {
-        global $CFG;
-        
-        if (!empty($CFG->tikaserverhost)) {
-            $baseuri = $CFG->tikaserverhost;
-            if (!empty($CFG->tikaserverport)) {
-                $baseuri .= ':' . $CFG->tikaserverport;
+        $tikaserverhost = get_config('tool_metadata_tika', 'tikaserverhost');
+        if (!empty($tikaserverhost)) {
+            $baseuri = $tikaserverhost;
+            $tikaserverport = get_config('tool_metadata_tika', 'tikaserverport');
+            if (!empty($tikaserverport)) {
+                $baseuri .= ':' . $tikaserverport;
             }
         } else {
             throw new extraction_exception('error:server:nohostset', 'metadataextractor_tika');
