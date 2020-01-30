@@ -47,4 +47,4 @@ $string['error:invalidservicetype'] = 'Invalid Tika service type set.';
 $string['error:tikapathnotset'] = 'Path to Tika application jar not set.';
 $string['error:server:missingdependency'] = 'Missing Tika server plugin dependency: {$a}.';
 $string['error:server:nohostset'] = 'No Tika server hostname or IP address set.';
-$string['error:server:httprequest'] = 'Error attempting to communicate with Tika server.';
+$string['error:server:httprequest'] = 'Error attempting to make HTTP request.';

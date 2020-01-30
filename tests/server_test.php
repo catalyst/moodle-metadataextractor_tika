@@ -46,6 +46,9 @@ class server_test extends advanced_testcase {
         }
     }
 
+    /**
+     * Test creating a new server instance.
+     */
     public function test_new_server() {
 
         unset_config('tikaserverhost');
@@ -56,6 +59,9 @@ class server_test extends advanced_testcase {
         $server = new metadataextractor_tika\server();
     }
 
+    /**
+     * Test extracting file metadata from Tika Server.
+     */
     public function test_get_file_metadata() {
         global $CFG;
 
@@ -64,24 +70,29 @@ class server_test extends advanced_testcase {
         $fs = get_file_storage();
         $filerecord = (object) [
             'contextid' => $context->id,
-            'filename' => 'response.json',
+            'filename' => 'test.pdf',
             'component' => 'metadataextractor_tika',
             'filearea' => 'testarea',
             'itemid' => 0,
             'filepath' => '/',
         ];
-        $filecontent = json_encode(['Content-Type' => 'application/pdf']);
-        $file = $fs->create_file_from_string($filerecord, $filecontent);
+        $file = $fs->create_file_from_string($filerecord, 'Test PDF');
+
+        // Mock the content of successful response from tika for a pdf file.
+        $responsecontent = json_encode(['Content-Type' => 'application/pdf']);
 
         // Add mock responses to the handlerstack.
         $mock = new \GuzzleHttp\Handler\MockHandler([
+            // Mock a standard JSON encoded successful response.
             new \GuzzleHttp\Psr7\Response(200,
-                ['Content-Type' => 'application/json'],
-                $file->get_content_file_handle()
+                ['Content-Type' => ['application/json']],
+                $responsecontent
             ),
+            // Mock an empty response.
             new \GuzzleHttp\Psr7\Response(202,
                 ['Content-Length' => 0]
             ),
+            // Mock a connection error exception response.
             new \GuzzleHttp\Exception\ConnectException('connection error',
                 new \GuzzleHttp\Psr7\Request('POST',
                 $CFG->tikaserverhost . ':' . $CFG->tikaserverport . '/meta/form'))
@@ -90,14 +101,72 @@ class server_test extends advanced_testcase {
 
         $server = new \metadataextractor_tika\server($handlerstack);
 
-        // A successful call should return json content.
+        // A successful call should return JSON encoded content.
         $actual = $server->get_file_metadata($file);
-        $this->assertEquals($filecontent, $actual);
+        $this->assertEquals($responsecontent, $actual);
         $this->assertJson($actual);
-        // Any status other than 'OK' should return false.
+        // Any status other than 'OK' (200) should return false.
         $this->assertFalse($server->get_file_metadata($file));
         // A failed call should throw an extraction exception.
         $this->expectException(\tool_metadata\extraction_exception::class);
         $server->get_file_metadata($file);
+    }
+
+    /**
+     * Provider for test_get_url_metadata.
+     *
+     * @return array
+     */
+    public function url_provider() {
+        return [
+            'A valid URL' => ['https://www.moodle.org', true],
+            'An invalid URL' => ['http://user:@www.example.com', false],
+            'An ftp URL' => ['ftp://speedtest.tele2.net/', false],
+            'A malicious file URL' => ['file://home/root/.ssh/id_rsa', false]
+        ];
+    }
+
+    /**
+     * Test extraction of metadata from a mod_url resource.
+     *
+     * @dataProvider url_provider
+     * @param $externalurl string URL to test.
+     * @param $isvalid string is URL valid.
+     *
+     * @throws \tool_metadata\extraction_exception
+     */
+    public function test_get_url_metadata($externalurl, $isvalid) {
+        global $CFG;
+
+        $fixturecontent = file_get_contents($CFG->dirroot .
+            '/admin/tool/metadata/extractor/tika/tests/fixtures/url_fixture.html');
+        $responsecontent = json_encode(['Content-Type' => 'text/html; charset=UTF-8', 'Content-Encoding' => 'UTF-8']);
+
+        // Add mock responses to the handlerstack.
+        $mock = new \GuzzleHttp\Handler\MockHandler([
+            // Return the fixture first, to emulate retrieving html via GET request.
+            new \GuzzleHttp\Psr7\Response(200, [], $fixturecontent),
+            // Mock tika server returned metadata for the html retrieved.
+            new \GuzzleHttp\Psr7\Response(200,
+                ['Content-Type' => ['application/json']],
+                $responsecontent
+            ),
+        ]);
+        $handlerstack = \GuzzleHttp\HandlerStack::create($mock);
+
+        $course = $this->getDataGenerator()->create_course();
+        $url = $this->getDataGenerator()->create_module('url', ['course' => $course]);
+        $url->externalurl = $externalurl;
+
+        $server = new \metadataextractor_tika\server($handlerstack);
+        $actual = $server->get_url_metadata($url);
+
+        if ($isvalid) {
+            $this->assertIsString($actual);
+            $this->assertEquals($responsecontent, $actual);
+            $this->assertJson($actual);
+        } else {
+            $this->assertFalse($actual);
+        }
     }
 }
