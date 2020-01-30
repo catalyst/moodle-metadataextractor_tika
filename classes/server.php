@@ -46,6 +46,11 @@ class server {
     private $client;
 
     /**
+     * @var string the base URI of the tika server to make HTTP requests to.
+     */
+    private $baseuri;
+
+    /**
      * Server constructor.
      *
      * @param null|\GuzzleHttp\HandlerStack $handlerstack optional stack of handlers for middleware or testing mocks.
@@ -54,7 +59,7 @@ class server {
      */
     public function __construct($handlerstack = null) {
         global $CFG;
-        
+
         if (!empty($CFG->tikaserverhost)) {
             $baseuri = $CFG->tikaserverhost;
             if (!empty($CFG->tikaserverport)) {
@@ -71,8 +76,10 @@ class server {
                 'local_aws');
         }
 
-        $params = ['base_uri' => $baseuri];
+        $this->baseuri = $baseuri;
+        $params = [];
 
+        // Add handlerstack for testing and any middleware.
         if (!empty($handlerstack)) {
             $params['handler'] = $handlerstack;
         }
@@ -83,7 +90,7 @@ class server {
     /**
      * Get json encoded file metadata from Tika server.
      *
-     * @param \stored_file $file
+     * @param \stored_file $file the file to extract metadata for.
      *
      * @return string|false $result json encoded metadata or false if metadata could not be extracted.
      * @throws \tool_metadata\extraction_exception
@@ -91,7 +98,7 @@ class server {
     public function get_file_metadata(stored_file $file) {
 
         try {
-            $response = $this->client->request('POST', '/meta/form', [
+            $response = $this->client->request('POST', "$this->baseuri/meta/form", [
                 'headers' => ['Accept' => 'application/json'],
                 'multipart' => [
                     [
@@ -109,11 +116,72 @@ class server {
             throw new extraction_exception('error:server:httprequest', 'metadataextractor_tika', '', null, $debuginfo);
         }
 
+        $result = $this->extract_response_metadata($response);
+
+        return $result;
+    }
+
+    /**
+     * Get json encoded metadata for a mod_url instance's external url.
+     *
+     * @param $url object mod_url instance.
+     *
+     * @return string|false $result json encoded metadata or false if metadata could not be extracted.
+     * @throws \tool_metadata\extraction_exception
+     */
+    public function get_url_metadata($url) {
+        $result = false;
+
+        // Only support valid HTTP(S) URLs, exit early if url is invalid.
+        if (!preg_match('/^https?:\/\//i', $url->externalurl) || !url_appears_valid_url($url->externalurl)) {
+            return $result;
+        }
+
+        $cm = get_coursemodule_from_instance('url', $url->id, $url->course, false, MUST_EXIST);
+        $fullurl = url_get_full_url($url, $cm, $url->course);
+
+        try {
+            // Get the url content to pass to tika, only allows up to 5 redirects.
+            $urlresponse = $this->client->request('GET', $fullurl);
+            $stream = $urlresponse->getBody();
+
+            $tikaresponse = $this->client->request('POST', "$this->baseuri/meta/form", [
+                'headers' => ['Accept' => 'application/json'],
+                'multipart' => [
+                    [
+                        'name' => $url->name,
+                        'contents' => $stream,
+                    ],
+                ],
+            ]);
+        } catch (\Exception $e) {
+            if (method_exists($e, 'getReasonPhrase')) {
+                $debuginfo = $e->getReasonPhrase();
+            } else {
+                $debuginfo = $e->getMessage();
+            }
+            throw new extraction_exception('error:server:httprequest', 'metadataextractor_tika', '', null, $debuginfo);
+        }
+
+        $result = $this->extract_response_metadata($tikaresponse);
+
+        return $result;
+    }
+
+    /**
+     * Extract metadata string from content of response.
+     *
+     * @param \GuzzleHttp\Psr7\Response $response
+     *
+     * @return string|false json string of metadata or false if failed.
+     */
+    private function extract_response_metadata(\GuzzleHttp\Psr7\Response $response) {
+        $result = false;
+
         if ($response->getStatusCode() == 200) {
             $result = $response->getBody()->getContents();
-        } else {
-            $result = false;
         }
+
         return $result;
     }
 
