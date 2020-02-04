@@ -24,12 +24,17 @@
 
 namespace metadataextractor_tika;
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Psr7\Response;
 use stored_file;
 use tool_metadata\extraction_exception;
 
 defined('MOODLE_INTERNAL') || die();
 
+global $CFG;
 require_once($CFG->dirroot . '/local/aws/sdk/aws-autoloader.php');
+require_once($CFG->dirroot . '/mod/url/locallib.php');
 
 /**
  * Class for making API requests to a Tika server.
@@ -72,10 +77,12 @@ class server {
         // Check that local_aws plugin is installed as this is a dependency for tika server configuration.
         $dependencyinfo = \core_plugin_manager::instance()->get_plugin_info('local_aws');
         if (empty($dependencyinfo)) {
-            throw new extraction_exception('error:server:missingdependency', 'metadataextractor_tika', '',
+            throw new extraction_exception('error:missingdependency', 'metadataextractor_tika', '',
                 'local_aws');
         }
 
+        // We don't add the baseuri as a param because we may want to use this client
+        // to make other external calls, instead pass it into client requests.
         $this->baseuri = $baseuri;
         $params = [];
 
@@ -85,6 +92,25 @@ class server {
         }
 
         $this->client = new \GuzzleHttp\Client($params);
+        $this->test_connection();
+    }
+
+    /**
+     * Test that server connection is working, throw exception on failure.
+     *
+     * @throws \tool_metadata\extraction_exception
+     */
+    protected function test_connection() {
+        try {
+            // This tika server api call should return HELLO message.
+            $response = $this->client->request('GET', "$this->baseuri/tika");
+            if ($response->getStatusCode() != 200) {
+                // Status code other than 200, tika server is not working correctly.
+                throw new extraction_exception('error:connectionerror', 'metadataextractor_tika');
+            }
+        } catch (GuzzleException $ex) {
+            throw new extraction_exception('error:connectionerror', 'metadataextractor_tika');
+        }
     }
 
     /**
@@ -122,20 +148,14 @@ class server {
     }
 
     /**
-     * Get json encoded metadata for a mod_url instance's external url.
+     * Get json encoded url metadata from Tika server.
      *
      * @param $url object mod_url instance.
      *
-     * @return string|false $result json encoded metadata or false if metadata could not be extracted.
+     * @return object result object containing {'metadata' => string, 'contenthash' => string, 'success' => bool}
      * @throws \tool_metadata\extraction_exception
      */
     public function get_url_metadata($url) {
-        $result = false;
-
-        // Only support valid HTTP(S) URLs, exit early if url is invalid.
-        if (!preg_match('/^https?:\/\//i', $url->externalurl) || !url_appears_valid_url($url->externalurl)) {
-            return $result;
-        }
 
         $cm = get_coursemodule_from_instance('url', $url->id, $url->course, false, MUST_EXIST);
         $fullurl = url_get_full_url($url, $cm, $url->course);
@@ -145,6 +165,7 @@ class server {
             $urlresponse = $this->client->request('GET', $fullurl);
             $stream = $urlresponse->getBody();
 
+            // Use the Tika Server meta/form path, tika/form is not support for HTML docs.
             $tikaresponse = $this->client->request('POST', "$this->baseuri/meta/form", [
                 'headers' => ['Accept' => 'application/json'],
                 'multipart' => [
@@ -176,10 +197,11 @@ class server {
      * @return string|false json string of metadata or false if failed.
      */
     private function extract_response_metadata(\GuzzleHttp\Psr7\Response $response) {
-        $result = false;
 
         if ($response->getStatusCode() == 200) {
             $result = $response->getBody()->getContents();
+        } else {
+            throw new extraction_exception('error:server', 'metadataextractor_tika');
         }
 
         return $result;

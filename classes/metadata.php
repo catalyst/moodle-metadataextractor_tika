@@ -38,11 +38,6 @@ defined('MOODLE_INTERNAL') || die();
 class metadata extends \tool_metadata\metadata {
 
     /**
-     * @var string A SHA1 hash of the content for the resource this metadata applies to.
-     */
-    public $contenthash;
-
-    /**
      * @var string The person or organization primarily responsible for creating the
      * intellectual content of the resource this metadata represents.
      */
@@ -106,7 +101,7 @@ class metadata extends \tool_metadata\metadata {
      */
     public $timemodified;
 
-    protected static function metadata_key_map() {
+    protected function metadata_key_map() {
 
         return [
             'format' => ['dc:format', 'Content-Type'],
