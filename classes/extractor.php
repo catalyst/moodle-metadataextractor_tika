@@ -26,8 +26,13 @@ namespace metadataextractor_tika;
 
 use stored_file;
 use tool_metadata\extraction_exception;
+use tool_metadata\helper;
 
 defined('MOODLE_INTERNAL') || die();
+
+global $CFG;
+require_once($CFG->dirroot . '/admin/tool/metadata/constants.php');
+require_once($CFG->dirroot . '/mod/url/locallib.php');
 
 /**
  * Class for extraction of metadata using Apache Tika.
@@ -36,7 +41,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright  2019 Tom Dickman <tomdickman@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class extractor extends \tool_metadata\extractor implements \tool_metadata\extractor_strategy {
+class extractor extends \tool_metadata\extractor {
 
     /**
      * Metadata type - An aggregation of resources.
@@ -129,29 +134,26 @@ class extractor extends \tool_metadata\extractor implements \tool_metadata\extra
         self::DCMI_TYPE_TEXT => ['web_file', 'document', 'spreadsheet', 'presentation'],
     ];
 
-    public function __construct() {
-    }
-
     /**
-     * Attempt to create file metadata.
+     * Attempt to extract file metadata.
      *
      * @param \stored_file $file the file to create metadata for.
      * @throws \tool_metadata\extraction_exception
      *
      * @return \metadataextractor_tika\metadata|false a metadata object instance or false if no metadata.
      */
-    public function create_file_metadata(stored_file $file) {
-        global $CFG, $DB;
+    public function extract_file_metadata(stored_file $file) {
+        global $CFG;
 
         $result = false;
 
         if (!empty($CFG->tikaservicetype)) {
             switch ($CFG->tikaservicetype) {
                 case self::SERVICETYPE_LOCAL :
-                    $rawmetadata = $this->create_file_metadata_local($file);
+                    $rawmetadata = $this->extract_file_metadata_local($file);
                     break;
                 case self::SERVICETYPE_SERVER :
-                    $rawmetadata = $this->create_file_metadata_server($file);
+                    $rawmetadata = $this->extract_file_metadata_server($file);
                     break;
                 default :
                     throw new extraction_exception('error:invalidservicetype');
@@ -165,23 +167,48 @@ class extractor extends \tool_metadata\extractor implements \tool_metadata\extra
         }
 
         if (!empty($metadataarray) && is_array($metadataarray)) {
-            $existingmetadata = $this->read_metadata($file->get_contenthash());
-            if ($existingmetadata) {
-                $metadataarray['id'] = $existingmetadata->id;
-                $metadataarray['timecreated'] = $existingmetadata->timecreated;
-                $metadata = new metadata($file->get_contenthash(), $metadataarray, true);
-                $updated = $DB->update_record(self::METADATA_TABLE, $metadata);
-            } else {
-                $metadata = new metadata($file->get_contenthash(), $metadataarray, true);
-                $id = $DB->insert_record(self::METADATA_TABLE, $metadata, true);
-                $metadata->id = $id;
+            $result = new metadata(helper::get_resourcehash($file, TOOL_METADATA_RESOURCE_TYPE_FILE), $metadataarray, true);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Attempt to extract url metadata.
+     *
+     * @param object $url the url to create metadata for.
+     * @throws \tool_metadata\extraction_exception
+     *
+     * @return \metadataextractor_tika\metadata|false a metadata object instance or false if no metadata.
+     */
+    public function extract_url_metadata($url) {
+        global $CFG;
+
+        $result = false;
+
+        if (!empty($CFG->tikaservicetype)) {
+            switch ($CFG->tikaservicetype) {
+                case self::SERVICETYPE_LOCAL :
+                    $rawmetadata = $this->extract_url_metadata_local($url);
+                    break;
+                case self::SERVICETYPE_SERVER :
+                    $rawmetadata = $this->extract_url_metadata_server($url);
+                    break;
+                default :
+                    throw new extraction_exception('error:invalidservicetype');
+                    break;
             }
-            if (!empty($updated) || !empty($id)) {
-                // Success, return the metadata instance for the stored data.
-                $result = $metadata;
-            } else {
-                throw new extraction_exception('error:extractionfailed');
-            }
+        }
+        if (!empty($rawmetadata)) {
+            // Use associative array as some key names may not parse well
+            // into php stdClass (eg. 'Content-Type').
+            $metadataarray = json_decode($rawmetadata, true);
+        } else {
+            throw new extraction_exception('error:nometadata', 'metadataextractor_tika');
+        }
+
+        if (!empty($metadataarray) && is_array($metadataarray)) {
+            $result = new metadata(helper::get_resourcehash($url, TOOL_METADATA_RESOURCE_TYPE_URL), $metadataarray, true);
         }
 
         return $result;
@@ -195,18 +222,22 @@ class extractor extends \tool_metadata\extractor implements \tool_metadata\extra
      * @return string|false $result json encoded metadata or false if metadata could not be extracted.
      * @throws \tool_metadata\extraction_exception
      */
-    private function create_file_metadata_local(stored_file $file) {
+    protected function extract_file_metadata_local(stored_file $file) {
         global $CFG;
 
-        $fs = get_file_storage();
-        $filesystem = $fs->get_file_system();
+        // This is polyfill for Moodle 3.7 backport, in later revisions, the filesystem method
+        // `get_local_path_from_storedfile($file, true)` is public and can be utilised to obtain local
+        // path.
+        $resource = $file->get_content_file_handle();
+        $localpath = stream_get_meta_data($resource)['uri'];
 
-        $localpath = $filesystem->get_local_path_from_storedfile($file, true);
-        if (!empty($CFG->tikalocalpath)) {
+        if ($missing = $this->get_missing_dependencies()) {
+            throw new extraction_exception('error:missingdependencies', 'metadataextractor_tika', '', $missing);
+        } elseif (empty($CFG->tikalocalpath)) {
+            throw new extraction_exception('error:tikapathnotset', 'metadataextractor_tika');
+        } else {
             $cmd = 'java -jar ' . $CFG->tikalocalpath . ' -j ' . $localpath;
             $rawmetadata = shell_exec($cmd);
-        } else {
-            throw new extraction_exception('error:tikapathnotset', 'metadataextractor_tika');
         }
 
         if (!empty($rawmetadata)) {
@@ -219,14 +250,14 @@ class extractor extends \tool_metadata\extractor implements \tool_metadata\extra
 
 
     /**
-     * Create file metadata using a tika server.
+     * Extract file metadata using a tika server.
      *
      * @param \stored_file $file
      *
      * @return string|false $result json encoded metadata or false if metadata could not be extracted.
      * @throws \tool_metadata\extraction_exception
      */
-    private function create_file_metadata_server(stored_file $file) {
+    protected function extract_file_metadata_server(stored_file $file) {
         $server = new server();
         $result = $server->get_file_metadata($file);
 
@@ -234,27 +265,114 @@ class extractor extends \tool_metadata\extractor implements \tool_metadata\extra
     }
 
     /**
-     * Get content from a stored file using the locally installed tika-app.
+     * Create url metadata using the locally installed tika-app.
      *
-     * @param \stored_file $file
+     * @param object $url mod_url instance.
      *
-     * @return bool|string
+     * @return string|false $result json encoded metadata or false if metadata could not be extracted.
+     * @throws \tool_metadata\extraction_exception
      */
-    public function get_file_content_local(stored_file $file) {
-        $fs = get_file_storage();
-        $filesystem = $fs->get_file_system();
+    protected function extract_url_metadata_local($url) {
+        global $CFG;
 
-        if (!$file->is_directory()) {
-            $metadata = null;
-            $localpath = $filesystem->get_local_path_from_storedfile($file, true);
-            $cmd = 'java -jar ' . $this->path . ' -t ' . $localpath;
-            $rawcontent = shell_exec($cmd);
+        $cm = get_coursemodule_from_instance('url', $url->id, $url->course, false, MUST_EXIST);
+        $fullurl = url_get_full_url($url, $cm, $url->course);
 
-            if ($rawcontent) {
-                return trim($rawcontent);
-            } else {
-                return false;
-            }
+        // Create a temp file and add url contents to it for tika parsing.
+        $file = tmpfile();
+        fwrite($file, file_get_contents($fullurl));
+        $localpath = stream_get_meta_data($file)['uri'];
+
+        if ($missing = $this->get_missing_dependencies()) {
+            throw new extraction_exception('error:missingdependencies', 'metadataextractor_tika', '', $missing);
+        } elseif (empty($CFG->tikalocalpath)) {
+            throw new extraction_exception('error:tikapathnotset', 'metadataextractor_tika');
+        } else {
+            $cmd = 'java -jar ' . $CFG->tikalocalpath . ' -j ' . $localpath;
+            $rawmetadata = shell_exec($cmd);
+            fclose($file);
         }
+
+        if (!empty($rawmetadata)) {
+            $result = $rawmetadata;
+        } else {
+            $result = false;
+        }
+        return $result;
+    }
+
+    /**
+     * Extract url metadata using a tika server.
+     *
+     * @param object $url mod_url instance.
+     *
+     * @return string|false $result json encoded metadata or false if metadata could not be extracted.
+     * @throws \tool_metadata\extraction_exception
+     */
+    protected function extract_url_metadata_server($url) {
+        $server = new server();
+        $result = $server->get_url_metadata($url);
+
+        return $result;
+    }
+
+    /**
+     * Are dependencies installed for the current configuration
+     * required to extract metadata with tika?
+     */
+    public function get_missing_dependencies() {
+        global $CFG;
+
+        $result = '';
+
+        if ($CFG->tikaservicetype == self::SERVICETYPE_LOCAL) {
+            $path = exec('which java');
+            if (empty($path)) {
+                $result = 'java';
+            }
+        } elseif ($CFG->tikaservicetype == self::SERVICETYPE_SERVER) {
+            if (!class_exists('\GuzzleHttp\Client')) {
+                $result = 'guzzle';
+            }
+        } else {
+            throw new extraction_exception('error:invalidservicetype', 'metadataextractor_tika');
+        }
+
+        return $result;
+    }
+
+    /**
+     * Validate that metadata can be extracted from a resource.
+     *
+     * @param object $resource the resource instance to check
+     * @param string $type the type of resource.
+     *
+     * @return bool
+     */
+    public function validate_resource($resource, string $type) : bool {
+        switch($type) {
+            // File resource cannot be directories.
+            case TOOL_METADATA_RESOURCE_TYPE_FILE :
+                if ($resource->is_directory()) {
+                    $result = false;
+                } else {
+                    $result = true;
+                }
+                break;
+            // Only support valid HTTP(S) URLs.
+            case TOOL_METADATA_RESOURCE_TYPE_URL :
+                if (!preg_match('/^https?:\/\//i', $resource->externalurl) ||
+                        !url_appears_valid_url($resource->externalurl)) {
+                    $result = false;
+                } else {
+                    $result = true;
+                }
+                break;
+            default:
+                $result = false;
+                break;
+        }
+
+        return $result;
     }
 }

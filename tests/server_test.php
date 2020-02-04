@@ -30,6 +30,7 @@ defined('MOODLE_INTERNAL') || die();
  * @package    metadataextractor_tika
  * @copyright  2019 Tom Dickman <tomdickman@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @group      metadataextractor_tika
  */
 class server_test extends advanced_testcase {
 
@@ -42,7 +43,7 @@ class server_test extends advanced_testcase {
         $dependencyinfo = \core_plugin_manager::instance()->get_plugin_info('local_aws');
         // Skip server tests if local_aws plugin dependency isn't installed as exceptions will be thrown.
         if (empty($dependencyinfo)) {
-            $this->markTestSkipped(get_string('error:server:missingdependency', 'metadataextractor_tika', 'local_aws'));
+            $this->markTestSkipped(get_string('error:missingdependency', 'metadataextractor_tika', 'local_aws'));
         }
     }
 
@@ -83,6 +84,8 @@ class server_test extends advanced_testcase {
 
         // Add mock responses to the handlerstack.
         $mock = new \GuzzleHttp\Handler\MockHandler([
+            // Mock the server test response.
+            new \GuzzleHttp\Psr7\Response(200),
             // Mock a standard JSON encoded successful response.
             new \GuzzleHttp\Psr7\Response(200,
                 ['Content-Type' => ['application/json']],
@@ -105,7 +108,8 @@ class server_test extends advanced_testcase {
         $actual = $server->get_file_metadata($file);
         $this->assertEquals($responsecontent, $actual);
         $this->assertJson($actual);
-        // Any status other than 'OK' (200) should return false.
+        // Any status other than 'OK' (200) should throw an extraction exception.
+        $this->expectException(\tool_metadata\extraction_exception::class);
         $this->assertFalse($server->get_file_metadata($file));
         // A failed call should throw an extraction exception.
         $this->expectException(\tool_metadata\extraction_exception::class);
@@ -113,37 +117,21 @@ class server_test extends advanced_testcase {
     }
 
     /**
-     * Provider for test_get_url_metadata.
-     *
-     * @return array
-     */
-    public function url_provider() {
-        return [
-            'A valid URL' => ['https://www.moodle.org', true],
-            'An invalid URL' => ['http://user:@www.example.com', false],
-            'An ftp URL' => ['ftp://speedtest.tele2.net/', false],
-            'A malicious file URL' => ['file://home/root/.ssh/id_rsa', false]
-        ];
-    }
-
-    /**
      * Test extraction of metadata from a mod_url resource.
-     *
-     * @dataProvider url_provider
-     * @param $externalurl string URL to test.
-     * @param $isvalid string is URL valid.
      *
      * @throws \tool_metadata\extraction_exception
      */
-    public function test_get_url_metadata($externalurl, $isvalid) {
+    public function test_get_url_metadata() {
         global $CFG;
 
         $fixturecontent = file_get_contents($CFG->dirroot .
-            '/admin/tool/metadata/extractor/tika/tests/fixtures/url_fixture.html');
+            '/admin/tool/metadata/tests/fixtures/url_fixture.html');
         $responsecontent = json_encode(['Content-Type' => 'text/html; charset=UTF-8', 'Content-Encoding' => 'UTF-8']);
 
         // Add mock responses to the handlerstack.
         $mock = new \GuzzleHttp\Handler\MockHandler([
+            // Mock the server test response.
+            new \GuzzleHttp\Psr7\Response(200),
             // Return the fixture first, to emulate retrieving html via GET request.
             new \GuzzleHttp\Psr7\Response(200, [], $fixturecontent),
             // Mock tika server returned metadata for the html retrieved.
@@ -156,17 +144,13 @@ class server_test extends advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $url = $this->getDataGenerator()->create_module('url', ['course' => $course]);
-        $url->externalurl = $externalurl;
 
         $server = new \metadataextractor_tika\server($handlerstack);
         $actual = $server->get_url_metadata($url);
 
-        if ($isvalid) {
-            $this->assertIsString($actual);
-            $this->assertEquals($responsecontent, $actual);
-            $this->assertJson($actual);
-        } else {
-            $this->assertFalse($actual);
-        }
+        $this->assertNotEmpty($actual);
+        $this->assertIsString($actual);
+        $this->assertEquals($responsecontent, $actual);
+        $this->assertJson($actual);
     }
 }

@@ -24,7 +24,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2019121800;        // The current plugin version (Date: YYYYMMDDXX)
+$plugin->version   = 2020021101;        // The current plugin version (Date: YYYYMMDDXX)
 $plugin->requires  = 2019052003;        // Requires this Moodle version
 $plugin->component = 'metadataextractor_tika';        // Full name of the plugin (used for diagnostics)
 $plugin->maturity = MATURITY_ALPHA;
+
+$plugin->dependencies = array('tool_metadata' => 2020021101);
