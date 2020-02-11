@@ -45,10 +45,12 @@ $string['setting:tikaservicetype:local'] = 'Local Tika application';
 // Error strings.
 $string['error:connectionerror'] = 'Error connecting to Tika server, please check server settings.';
 $string['error:invalidservicetype'] = 'Invalid Tika service type set.';
-$string['error:tikapathnotset'] = 'Path to Tika application jar not set.';
+$string['error:local:config'] = 'Local Tika application not installed or incorrectly configured.';
 $string['error:missingdependency'] = 'Missing Tika metadataextractor dependency: {$a}.';
 $string['error:nometadata'] = 'Tika processing returned no metadata for resource.';
 $string['error:server'] = 'Tika server responded with an error.';
 $string['error:server:ftpnotsupported'] = 'Metadata extraction from FTP urls is not supported.';
 $string['error:server:nohostset'] = 'No Tika server hostname or IP address set.';
 $string['error:server:httprequest'] = 'Error attempting to make HTTP request.';
+$string['error:server:notready'] = 'Tika server is not ready to process HTTP requests.';
+$string['error:tikapathnotset'] = 'Path to Tika application jar not set.';

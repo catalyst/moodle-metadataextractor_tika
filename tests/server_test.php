@@ -84,8 +84,6 @@ class server_test extends advanced_testcase {
 
         // Add mock responses to the handlerstack.
         $mock = new \GuzzleHttp\Handler\MockHandler([
-            // Mock the server test response.
-            new \GuzzleHttp\Psr7\Response(200),
             // Mock a standard JSON encoded successful response.
             new \GuzzleHttp\Psr7\Response(200,
                 ['Content-Type' => ['application/json']],
@@ -97,8 +95,7 @@ class server_test extends advanced_testcase {
             ),
             // Mock a connection error exception response.
             new \GuzzleHttp\Exception\ConnectException('connection error',
-                new \GuzzleHttp\Psr7\Request('POST',
-                $CFG->tikaserverhost . ':' . $CFG->tikaserverport . '/meta/form'))
+                new \GuzzleHttp\Psr7\Request('GET', 'localhost:9998/tika'))
         ]);
         $handlerstack = \GuzzleHttp\HandlerStack::create($mock);
 
@@ -130,8 +127,6 @@ class server_test extends advanced_testcase {
 
         // Add mock responses to the handlerstack.
         $mock = new \GuzzleHttp\Handler\MockHandler([
-            // Mock the server test response.
-            new \GuzzleHttp\Psr7\Response(200),
             // Return the fixture first, to emulate retrieving html via GET request.
             new \GuzzleHttp\Psr7\Response(200, [], $fixturecontent),
             // Mock tika server returned metadata for the html retrieved.
@@ -152,5 +147,35 @@ class server_test extends advanced_testcase {
         $this->assertIsString($actual);
         $this->assertEquals($responsecontent, $actual);
         $this->assertJson($actual);
+    }
+
+    public function test_is_ready() {
+
+        // Add mock responses to the handlerstack.
+        $mock = new \GuzzleHttp\Handler\MockHandler([
+            // Mock a successful OK test response.
+            new \GuzzleHttp\Psr7\Response(200),
+            // Mock a successful non-OK response.
+            new \GuzzleHttp\Psr7\Response(201),
+            // Mock a client error response.
+            new \GuzzleHttp\Psr7\Response(404),
+            // Mock a connection error exception response.
+            new \GuzzleHttp\Exception\ConnectException('connection error',
+                new \GuzzleHttp\Psr7\Request('GET', 'localhost:9998/tika'))
+        ]);
+        $handlerstack = \GuzzleHttp\HandlerStack::create($mock);
+
+        $server = new \metadataextractor_tika\server($handlerstack);
+
+        // Expect a 200 response status to return true.
+        $this->assertTrue($server->is_ready());
+        // Expect a non-200 response status to return false.
+        $this->assertFalse($server->is_ready());
+        // Expect a client error to throw an exception.
+        $this->expectException(\tool_metadata\extraction_exception::class);
+        $server->is_ready();
+        // Expect a connection error to throw an exception.
+        $this->expectException(\tool_metadata\extraction_exception::class);
+        $server->is_ready();
     }
 }
