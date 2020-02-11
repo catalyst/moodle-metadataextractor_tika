@@ -153,9 +153,11 @@ class server_test extends advanced_testcase {
 
         // Add mock responses to the handlerstack.
         $mock = new \GuzzleHttp\Handler\MockHandler([
-            // Mock a successful test response.
+            // Mock a successful OK test response.
             new \GuzzleHttp\Psr7\Response(200),
-            // Mock an unsuccessful test response.
+            // Mock a successful non-OK response.
+            new \GuzzleHttp\Psr7\Response(201),
+            // Mock a client error response.
             new \GuzzleHttp\Psr7\Response(404),
             // Mock a connection error exception response.
             new \GuzzleHttp\Exception\ConnectException('connection error',
@@ -169,6 +171,9 @@ class server_test extends advanced_testcase {
         $this->assertTrue($server->is_ready());
         // Expect a non-200 response status to return false.
         $this->assertFalse($server->is_ready());
+        // Expect a client error to throw an exception.
+        $this->expectException(\tool_metadata\extraction_exception::class);
+        $server->is_ready();
         // Expect a connection error to throw an exception.
         $this->expectException(\tool_metadata\extraction_exception::class);
         $server->is_ready();
