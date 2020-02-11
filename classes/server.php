@@ -92,25 +92,27 @@ class server {
         }
 
         $this->client = new \GuzzleHttp\Client($params);
-        $this->test_connection();
     }
 
     /**
-     * Test that server connection is working, throw exception on failure.
+     * Test that server is ready to perform requests.
      *
      * @throws \tool_metadata\extraction_exception
      */
-    protected function test_connection() {
+    public function is_ready() {
+        $result = false;
+
         try {
             // This tika server api call should return HELLO message.
             $response = $this->client->request('GET', "$this->baseuri/tika");
-            if ($response->getStatusCode() != 200) {
-                // Status code other than 200, tika server is not working correctly.
-                throw new extraction_exception('error:connectionerror', 'metadataextractor_tika');
+            if ($response->getStatusCode() == 200) {
+                $result = true;
             }
         } catch (GuzzleException $ex) {
             throw new extraction_exception('error:connectionerror', 'metadataextractor_tika');
         }
+
+        return $result;
     }
 
     /**

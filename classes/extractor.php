@@ -179,12 +179,10 @@ class extractor extends \tool_metadata\extractor {
      * @param object $url the url to create metadata for.
      * @throws \tool_metadata\extraction_exception
      *
-     * @return \metadataextractor_tika\metadata|false a metadata object instance or false if no metadata.
+     * @return \metadataextractor_tika\metadata a metadata object instance.
      */
     public function extract_url_metadata($url) {
         global $CFG;
-
-        $result = false;
 
         if (!empty($CFG->tikaservicetype)) {
             switch ($CFG->tikaservicetype) {
@@ -219,30 +217,21 @@ class extractor extends \tool_metadata\extractor {
      *
      * @param \stored_file $file
      *
-     * @return string|false $result json encoded metadata or false if metadata could not be extracted.
+     * @return string|null $result json encoded metadata or null if no metadata.
      * @throws \tool_metadata\extraction_exception
      */
     protected function extract_file_metadata_local(stored_file $file) {
         global $CFG;
 
-        $fs = get_file_storage();
-        $filesystem = $fs->get_file_system();
+        $localpath = $file->get_filepath();
 
-        $localpath = $filesystem->get_local_path_from_storedfile($file, true);
-        if ($missing = $this->get_missing_dependencies()) {
-            throw new extraction_exception('error:missingdependencies', 'metadataextractor_tika', '', $missing);
-        } elseif (empty($CFG->tikalocalpath)) {
-            throw new extraction_exception('error:tikapathnotset', 'metadataextractor_tika');
+        if (!$this->is_local_tika_ready()) {
+            throw new extraction_exception('error:local:config', 'metadataextractor_tika');
         } else {
             $cmd = 'java -jar ' . $CFG->tikalocalpath . ' -j ' . $localpath;
-            $rawmetadata = shell_exec($cmd);
+            $result = shell_exec($cmd);
         }
 
-        if (!empty($rawmetadata)) {
-            $result = $rawmetadata;
-        } else {
-            $result = false;
-        }
         return $result;
     }
 
@@ -252,12 +241,16 @@ class extractor extends \tool_metadata\extractor {
      *
      * @param \stored_file $file
      *
-     * @return string|false $result json encoded metadata or false if metadata could not be extracted.
+     * @return string|null $result json encoded metadata or null if no metadata.
      * @throws \tool_metadata\extraction_exception
      */
     protected function extract_file_metadata_server(stored_file $file) {
         $server = new server();
-        $result = $server->get_file_metadata($file);
+        if (!$server->is_ready()) {
+            throw new extraction_exception('error:server:notready', 'metadataextractor_tika');
+        } else {
+            $result = $server->get_file_metadata($file);
+        }
 
         return $result;
     }
@@ -267,7 +260,7 @@ class extractor extends \tool_metadata\extractor {
      *
      * @param object $url mod_url instance.
      *
-     * @return string|false $result json encoded metadata or false if metadata could not be extracted.
+     * @return string|null $result json encoded metadata or null if no metadata.
      * @throws \tool_metadata\extraction_exception
      */
     protected function extract_url_metadata_local($url) {
@@ -281,10 +274,8 @@ class extractor extends \tool_metadata\extractor {
         fwrite($file, file_get_contents($fullurl));
         $localpath = stream_get_meta_data($file)['uri'];
 
-        if ($missing = $this->get_missing_dependencies()) {
-            throw new extraction_exception('error:missingdependencies', 'metadataextractor_tika', '', $missing);
-        } elseif (empty($CFG->tikalocalpath)) {
-            throw new extraction_exception('error:tikapathnotset', 'metadataextractor_tika');
+        if (!$this->is_local_tika_ready()) {
+            throw new extraction_exception('error:local:config', 'metadataextractor_tika');
         } else {
             $cmd = 'java -jar ' . $CFG->tikalocalpath . ' -j ' . $localpath;
             $rawmetadata = shell_exec($cmd);
@@ -304,12 +295,16 @@ class extractor extends \tool_metadata\extractor {
      *
      * @param object $url mod_url instance.
      *
-     * @return string|false $result json encoded metadata or false if metadata could not be extracted.
+     * @return string|null $result json encoded metadata or null if no metadata.
      * @throws \tool_metadata\extraction_exception
      */
     protected function extract_url_metadata_server($url) {
         $server = new server();
-        $result = $server->get_url_metadata($url);
+        if (!$server->is_ready()) {
+            throw new extraction_exception('error:server:notready', 'metadataextractor_tika');
+        } else {
+            $result = $server->get_url_metadata($url);
+        }
 
         return $result;
     }
@@ -360,7 +355,7 @@ class extractor extends \tool_metadata\extractor {
             // Only support valid HTTP(S) URLs.
             case TOOL_METADATA_RESOURCE_TYPE_URL :
                 if (!preg_match('/^https?:\/\//i', $resource->externalurl) ||
-                        !url_appears_valid_url($resource->externalurl)) {
+                    !url_appears_valid_url($resource->externalurl)) {
                     $result = false;
                 } else {
                     $result = true;
@@ -369,6 +364,33 @@ class extractor extends \tool_metadata\extractor {
             default:
                 $result = false;
                 break;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Test that local tika install is operational.
+     *
+     * @return bool true if configured and working correctly.
+     */
+    public function is_local_tika_ready() {
+        global $CFG;
+
+        if (empty($CFG->tikaservicetype) || $CFG->tikaservicetype == extractor::SERVICETYPE_LOCAL) {
+            $result = false;
+        } elseif (empty($CFG->tikalocalpath) || !empty(self::get_missing_dependencies())) {
+            $result = false;
+        } elseif (!file_exists($CFG->tikalocalpath)) {
+            $result = false;
+        } else {
+            $cmd = 'java -jar ' . $CFG->tikalocalpath . ' --help';
+            $returned = shell_exec($cmd);
+            if (!empty($returned)) {
+                $result = true;
+            } else {
+                $result = false;
+            }
         }
 
         return $result;
