@@ -140,7 +140,7 @@ class extractor extends \tool_metadata\extractor {
      * @param \stored_file $file the file to create metadata for.
      * @throws \tool_metadata\extraction_exception
      *
-     * @return \metadataextractor_tika\metadata|false a metadata object instance or false if no metadata.
+     * @return \metadataextractor_tika\metadata|null a metadata object instance or null if no metadata.
      */
     public function extract_file_metadata(stored_file $file) {
         global $CFG;
@@ -177,12 +177,14 @@ class extractor extends \tool_metadata\extractor {
      * Attempt to extract url metadata.
      *
      * @param object $url the url to create metadata for.
-     * @throws \tool_metadata\extraction_exception
      *
-     * @return \metadataextractor_tika\metadata a metadata object instance.
+     * @return \metadataextractor_tika\metadata|null a metadata object instance or false if no metadata.
+     * @throws \tool_metadata\extraction_exception
      */
     public function extract_url_metadata($url) {
         global $CFG;
+
+        $result = null;
 
         if (!empty($CFG->tikaservicetype)) {
             switch ($CFG->tikaservicetype) {
@@ -316,6 +318,8 @@ class extractor extends \tool_metadata\extractor {
     /**
      * Get the name of missing dependencies for the current configuration
      * required to extract metadata with tika.
+     *
+     * @throws \tool_metadata\extraction_exception
      */
     public function get_missing_dependencies() {
         global $CFG;
