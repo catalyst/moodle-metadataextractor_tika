@@ -135,6 +135,15 @@ class extractor extends \tool_metadata\extractor {
     ];
 
     /**
+     * Get the configured servicetype from plugin config.
+     *
+     * @return string|false the set value or false if not set.
+     */
+    public function get_servicetype_set() {
+        return get_config('metadataextractor_tika', 'tikaservicetype');
+    }
+
+    /**
      * Attempt to extract file metadata.
      *
      * @param \stored_file $file the file to create metadata for.
@@ -143,12 +152,11 @@ class extractor extends \tool_metadata\extractor {
      * @return \metadataextractor_tika\metadata|null a metadata object instance or null if no metadata.
      */
     public function extract_file_metadata(stored_file $file) {
-        global $CFG;
 
         $result = null;
 
-        if (!empty($CFG->tikaservicetype)) {
-            switch ($CFG->tikaservicetype) {
+        if (!empty($servicetype = $this->get_servicetype_set())) {
+            switch ($servicetype) {
                 case self::SERVICETYPE_LOCAL :
                     $rawmetadata = $this->extract_file_metadata_local($file);
                     break;
@@ -182,12 +190,11 @@ class extractor extends \tool_metadata\extractor {
      * @throws \tool_metadata\extraction_exception
      */
     public function extract_url_metadata($url) {
-        global $CFG;
 
         $result = null;
 
-        if (!empty($CFG->tikaservicetype)) {
-            switch ($CFG->tikaservicetype) {
+        if (!empty($servicetype = $this->get_servicetype_set())) {
+            switch ($servicetype) {
                 case self::SERVICETYPE_LOCAL :
                     $rawmetadata = $this->extract_url_metadata_local($url);
                     break;
@@ -230,11 +237,12 @@ class extractor extends \tool_metadata\extractor {
         // path.
         $resource = $file->get_content_file_handle();
         $localpath = stream_get_meta_data($resource)['uri'];
+        $tikapath = get_config('metadataextractor_tika', 'tikalocalpath');
 
         if (!$this->is_local_tika_ready()) {
             throw new extraction_exception('error:local:config', 'metadataextractor_tika');
         } else {
-            $cmd = 'java -jar ' . $CFG->tikalocalpath . ' -j ' . $localpath;
+            $cmd = 'java -jar ' . $tikapath . ' -j ' . $localpath;
             $result = shell_exec($cmd);
         }
 
@@ -270,20 +278,19 @@ class extractor extends \tool_metadata\extractor {
      * @throws \tool_metadata\extraction_exception
      */
     protected function extract_url_metadata_local($url) {
-        global $CFG;
-
         $cm = get_coursemodule_from_instance('url', $url->id, $url->course, false, MUST_EXIST);
         $fullurl = url_get_full_url($url, $cm, $url->course);
 
         // Create a temp file and add url contents to it for tika parsing.
         $file = tmpfile();
         fwrite($file, file_get_contents($fullurl));
-        $localpath = stream_get_meta_data($file)['uri'];
+        $filepath = stream_get_meta_data($file)['uri'];
 
         if (!$this->is_local_tika_ready()) {
             throw new extraction_exception('error:local:config', 'metadataextractor_tika');
         } else {
-            $cmd = 'java -jar ' . $CFG->tikalocalpath . ' -j ' . $localpath;
+            $tikapath = get_config('metadataextractor_tika', 'tikalocalpath');
+            $cmd = 'java -jar ' . $tikapath . ' -j ' . $filepath;
             $rawmetadata = shell_exec($cmd);
             fclose($file);
         }
@@ -306,6 +313,7 @@ class extractor extends \tool_metadata\extractor {
      */
     protected function extract_url_metadata_server($url) {
         $server = new server();
+
         if (!$server->is_ready()) {
             throw new extraction_exception('error:server:notready', 'metadataextractor_tika');
         } else {
@@ -322,16 +330,16 @@ class extractor extends \tool_metadata\extractor {
      * @throws \tool_metadata\extraction_exception
      */
     public function get_missing_dependencies() {
-        global $CFG;
-
         $result = '';
 
-        if ($CFG->tikaservicetype == self::SERVICETYPE_LOCAL) {
+        $servicetype = $this->get_servicetype_set();
+
+        if ($servicetype == self::SERVICETYPE_LOCAL) {
             $path = exec('which java');
             if (empty($path)) {
                 $result = 'java';
             }
-        } elseif ($CFG->tikaservicetype == self::SERVICETYPE_SERVER) {
+        } elseif ($servicetype == self::SERVICETYPE_SERVER) {
             if (!class_exists('\GuzzleHttp\Client')) {
                 $result = 'guzzle';
             }
@@ -383,16 +391,14 @@ class extractor extends \tool_metadata\extractor {
      * @return bool true if configured and working correctly.
      */
     public function is_local_tika_ready() {
-        global $CFG;
+        $tikapath = get_config('metadataextractor_tika', 'tikalocalpath');
 
-        if (empty($CFG->tikaservicetype) || $CFG->tikaservicetype != extractor::SERVICETYPE_LOCAL) {
+        if (empty($tikapath) || !empty($this->get_missing_dependencies())) {
             $result = false;
-        } elseif (empty($CFG->tikalocalpath) || !empty(self::get_missing_dependencies())) {
-            $result = false;
-        } elseif (!file_exists($CFG->tikalocalpath)) {
+        } elseif (!file_exists($tikapath)) {
             $result = false;
         } else {
-            $cmd = 'java -jar ' . $CFG->tikalocalpath . ' --help';
+            $cmd = 'java -jar ' . $tikapath . ' --help';
             $returned = shell_exec($cmd);
             if (!empty($returned)) {
                 $result = true;
