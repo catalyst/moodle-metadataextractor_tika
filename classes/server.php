@@ -65,13 +65,19 @@ class server {
     public function __construct($handlerstack = null) {
         global $CFG;
 
-        if (!empty($CFG->tikaserverhost)) {
-            $baseuri = $CFG->tikaserverhost;
-            if (!empty($CFG->tikaserverport)) {
-                $baseuri .= ':' . $CFG->tikaserverport;
+        $host = get_config('metadataextractor_tika', 'tikaserverhost');
+        $port = get_config('metadataextractor_tika', 'tikaserverport');
+
+        if (!empty($host)) {
+            $baseuri = $host;
+            if (!empty($port)) {
+                $baseuri .= ':' . $port;
             }
-        } else {
+        } elseif (empty($handlerstack)) {
             throw new extraction_exception('error:server:nohostset', 'metadataextractor_tika');
+        } else {
+            // We have a handler, running tests so set base URI to default.
+            $baseuri = $CFG->wwwroot;
         }
 
         // Check that local_aws plugin is installed as this is a dependency for tika server configuration.
