@@ -230,7 +230,6 @@ class extractor extends \tool_metadata\extractor {
      * @throws \tool_metadata\extraction_exception
      */
     protected function extract_file_metadata_local(stored_file $file) {
-        global $CFG;
 
         // This is polyfill for Moodle 3.7 backport, in later revisions, the filesystem method
         // `get_local_path_from_storedfile($file, true)` is public and can be utilised to obtain local
@@ -324,24 +323,24 @@ class extractor extends \tool_metadata\extractor {
     }
 
     /**
-     * Get the name of missing dependencies for the current configuration
-     * required to extract metadata with tika.
+     * Get the name of missing dependencies for a servicetype.
      *
+     * @param string $servicetype the servicetype to check for missing dependencies for.
+     *
+     * @return array string[] or missing dependency names.
      * @throws \tool_metadata\extraction_exception
      */
-    public function get_missing_dependencies() {
-        $result = '';
-
-        $servicetype = $this->get_servicetype_set();
+    public function get_missing_dependencies(string $servicetype) : array {
+        $result = [];
 
         if ($servicetype == self::SERVICETYPE_LOCAL) {
             $path = exec('which java');
             if (empty($path)) {
-                $result = 'java';
+                $result[] = 'java';
             }
         } elseif ($servicetype == self::SERVICETYPE_SERVER) {
             if (!class_exists('\GuzzleHttp\Client')) {
-                $result = 'guzzle';
+                $result[] = 'guzzle';
             }
         } else {
             throw new extraction_exception('error:invalidservicetype', 'metadataextractor_tika');
@@ -390,10 +389,10 @@ class extractor extends \tool_metadata\extractor {
      *
      * @return bool true if configured and working correctly.
      */
-    public function is_local_tika_ready() {
+    public function is_local_tika_ready() : bool {
         $tikapath = get_config('metadataextractor_tika', 'tikalocalpath');
 
-        if (empty($tikapath) || !empty($this->get_missing_dependencies())) {
+        if (empty($tikapath) || !empty($this->get_missing_dependencies(self::SERVICETYPE_LOCAL))) {
             $result = false;
         } elseif (!file_exists($tikapath)) {
             $result = false;
