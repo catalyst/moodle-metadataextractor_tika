@@ -37,8 +37,8 @@ class server_test extends advanced_testcase {
     public function setUp() {
         $this->resetAfterTest();
 
-        set_config('tikaserverhost', 'localhost');
-        set_config('tikaserverport', 9998);
+        set_config('tikaserverhost', 'localhost', 'metadataextractor_tika');
+        set_config('tikaserverport', 9998, 'metadataextractor_tika');
 
         $dependencyinfo = \core_plugin_manager::instance()->get_plugin_info('local_aws');
         // Skip server tests if local_aws plugin dependency isn't installed as exceptions will be thrown.
@@ -52,8 +52,8 @@ class server_test extends advanced_testcase {
      */
     public function test_new_server() {
 
-        unset_config('tikaserverhost');
-        unset_config('tikaserverport');
+        unset_config('tikaserverhost', 'metadataextractor_tika');
+        unset_config('tikaserverport', 'metadataextractor_tika');
 
         // Expect an exception to be thrown when there is no tika server hostname configured.
         $this->expectException(\tool_metadata\extraction_exception::class);
