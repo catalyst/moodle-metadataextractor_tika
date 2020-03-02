@@ -11,7 +11,7 @@
         <FIELD NAME="format" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The MIME type of the resource, in accordance with IANA Media Types."/>
         <FIELD NAME="type" TYPE="char" LENGTH="40" NOTNULL="false" SEQUENCE="false" COMMENT="One of the Dublin Core Metadata Initiative Type Vocabulary types."/>
         <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="title" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The name given to the resource, usually by the creator or publisher."/>
+        <FIELD NAME="title" TYPE="char" LENGTH="1000" NOTNULL="false" SEQUENCE="false" COMMENT="The name given to the resource, usually by the creator or publisher."/>
         <FIELD NAME="subject" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The topic of the resource.  Typically, subject will be expressed as keywords or phrases that describe the subject or content of the resource."/>
         <FIELD NAME="creator" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" COMMENT="The person or organization primarily responsible for creating the intellectual content of the resource this metadata represents."/>
         <FIELD NAME="contributor" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Persons or organizations not specified in the creator who have made significant intellectual contributions to the resource but whose contribution is secondary to any person or organization specified in creator."/>

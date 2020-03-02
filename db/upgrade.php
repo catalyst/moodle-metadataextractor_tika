@@ -55,5 +55,17 @@ function xmldb_metadataextractor_tika_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2020020600, 'metadataextractor', 'tika');
     }
 
+    if ($oldversion < 2020030201) {
+        $table = new xmldb_table('metadataextractor_tika');
+        // Lenghten field title on table metadataextractor_tika.
+        $field = new xmldb_field('title', XMLDB_TYPE_CHAR, '1000', null, null, null, null, 'description');
+
+        // Launch change field type title.
+        $dbman->change_field_type($table, $field);
+
+        // Tika savepoint reached.
+        upgrade_plugin_savepoint(true, 2020030201, 'metadataextractor', 'tika');
+    }
+
     return true;
 }
