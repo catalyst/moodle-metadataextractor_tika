@@ -44,72 +44,12 @@ require_once($CFG->dirroot . '/mod/url/locallib.php');
 class extractor extends \tool_metadata\extractor {
 
     /**
-     * Metadata type - An aggregation of resources.
-     */
-    const DCMI_TYPE_COLLECTION = 'collection';
-
-    /**
-     * Metadata type - Data encoded in a defined structure.
-     */
-    const DCMI_TYPE_DATASET = 'dataset';
-
-    /**
-     * Metadata type - A non-persistent, time-based occurrence.
-     */
-    const DCMI_TYPE_EVENT = 'event';
-
-    /**
-     * Metadata type - A resource requiring interaction from the user to be understood, executed, or experienced.
-     */
-    const DCMI_TYPE_INTERACTIVE = 'interactiveresource';
-
-    /**
-     * Metadata type - A visual representation other than text.
-     */
-    const DCMI_TYPE_IMAGE = 'image';
-
-    /**
-     * Metadata type - A series of visual representations imparting an impression of motion when shown in succession.
-     */
-    const DCMI_TYPE_MOVINGIMAGE = 'movingimage';
-
-    /**
-     * Metadata type - An inanimate, three-dimensional object or substance.
-     */
-    const DCMI_TYPE_PHYSICAL = 'physicalobject';
-
-    /**
-     * Metadata type - A system that provides one or more functions.
-     */
-    const DCMI_TYPE_SERVICE = 'service';
-
-    /**
-     * Metadata type - A computer program in source or compiled form.
-     */
-    const DCMI_TYPE_SOFTWARE = 'software';
-
-    /**
-     * Metadata type - A resource primarily intended to be heard.
-     */
-    const DCMI_TYPE_SOUND = 'sound';
-
-    /**
-     * Metadata type - A static visual representation.
-     */
-    const DCMI_TYPE_STILLIMAGE = 'stillimage';
-
-    /**
-     * Metadata type - A resource consisting primarily of words for reading.
-     */
-    const DCMI_TYPE_TEXT = 'text';
-
-    /**
      * The plugin name.
      */
     const METADATAEXTRACTOR_NAME = 'tika';
 
     /**
-     * Table name for storing extracted metadata for this extractor.
+     * Default table name for storing extracted metadata for this extractor.
      */
     const METADATA_BASE_TABLE = 'metadataextractor_tika';
 
@@ -124,15 +64,9 @@ class extractor extends \tool_metadata\extractor {
     const SERVICETYPE_SERVER = 'server';
 
     /**
-     * A map of the Moodle mimetype groups to DCMI types.
+     * The string used my Apache Tika in raw metadata to identify mimetype of resource parsed.
      */
-    const DCMI_TYPE_MIMETYPE_GROUP_MAP = [
-        self::DCMI_TYPE_MOVINGIMAGE => ['video', 'html_video', 'web_video'],
-        self::DCMI_TYPE_SOUND => ['audio', 'html_audio', 'web_audio', 'html_track'],
-        self::DCMI_TYPE_IMAGE => ['image', 'web_image'],
-        self::DCMI_TYPE_COLLECTION => ['archive'],
-        self::DCMI_TYPE_TEXT => ['web_file', 'document', 'spreadsheet', 'presentation'],
-    ];
+    const TIKA_MIMETYPE_KEY = 'Content-Type';
 
     /**
      * Get the configured servicetype from plugin config.
@@ -175,7 +109,9 @@ class extractor extends \tool_metadata\extractor {
         }
 
         if (!empty($metadataarray) && is_array($metadataarray)) {
-            $result = new metadata(0, helper::get_resourcehash($file, TOOL_METADATA_RESOURCE_TYPE_FILE), $metadataarray);
+            $mimetype = $metadataarray[self::TIKA_MIMETYPE_KEY];
+            $class = tika_helper::get_metadata_class($mimetype);
+            $result = new $class(0, helper::get_resourcehash($file, TOOL_METADATA_RESOURCE_TYPE_FILE), $metadataarray);
         }
 
         return $result;
@@ -318,6 +254,47 @@ class extractor extends \tool_metadata\extractor {
         }
 
         return $result;
+    }
+
+    public function get_metadata(string $resourcehash) {
+        global $DB;
+
+        // Get the standard metadata record so we can determine the type.
+        $record = $DB->get_record(static::METADATA_TABLE,
+            ['resourcehash' => $resourcehash]);
+
+        if (!empty($record)) {
+            if ($record->type == TOOL_METADATA_RESOURCE_TYPE_FILE) {
+                $filetype = tika_helper::get_filetype($record->format);
+
+
+            } else {
+
+            }
+        } else {
+            $metadata = null;
+        }
+
+        return $metadata;
+    }
+
+    public function create_metadata(metadata $metadata) {
+        global $DB;
+
+        $existingmetadata = $this->get_metadata($metadata->get_resourcehash());
+
+        if ($existingmetadata) {
+            $this->update_metadata($existingmetadata->id, $metadata, $extractor);
+        } else {
+            $id = $DB->insert_record(self::get_table(), $metadata);
+            $metadata->id = $id;
+        }
+
+        return $metadata;
+    }
+
+    public function update_metadata(int $id, metadata $metadata) {
+
     }
 
     /**
