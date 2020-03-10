@@ -71,9 +71,8 @@ class extractor_test extends advanced_testcase {
      * Test extracting metadata for a pdf file resource in Moodle.
      */
     public function test_extract_file_metadata_pdf() {
-        global $CFG;
 
-        $file = mock_file_builder::mock_pdf();
+        [$metadata, $file] = mock_file_builder::mock_pdf();
         $extractor = new extractor();
 
         // Make sure we have the correct configuration and dependencies to carry out this test.
@@ -82,8 +81,8 @@ class extractor_test extends advanced_testcase {
         $result = $extractor->extract_file_metadata($file);
 
         $this->assertNotEmpty($result);
-        $this->assertEquals('Moodle ' . $CFG->release, $result->creator);
-        $this->assertEquals('Test PDF', $result->title);
+        $this->assertEquals($metadata['Creator'], $result->creator);
+        $this->assertEquals($metadata['Title'], $result->title);
         $this->assertEquals('en', $result->language);
     }
 

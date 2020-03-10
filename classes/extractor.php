@@ -111,7 +111,7 @@ class extractor extends \tool_metadata\extractor {
     /**
      * Table name for storing extracted metadata for this extractor.
      */
-    const METADATA_TABLE = 'metadataextractor_tika';
+    const METADATA_BASE_TABLE = 'metadataextractor_tika';
 
     /**
      * Local Tika service type: Java and a Tika application jar are installed locally, plugin will use direct commands to CLI.
@@ -175,7 +175,7 @@ class extractor extends \tool_metadata\extractor {
         }
 
         if (!empty($metadataarray) && is_array($metadataarray)) {
-            $result = new metadata(helper::get_resourcehash($file, TOOL_METADATA_RESOURCE_TYPE_FILE), $metadataarray, true);
+            $result = new metadata(0, helper::get_resourcehash($file, TOOL_METADATA_RESOURCE_TYPE_FILE), $metadataarray);
         }
 
         return $result;
@@ -215,7 +215,7 @@ class extractor extends \tool_metadata\extractor {
         }
 
         if (!empty($metadataarray) && is_array($metadataarray)) {
-            $result = new metadata(helper::get_resourcehash($url, TOOL_METADATA_RESOURCE_TYPE_URL), $metadataarray, true);
+            $result = new metadata(0, helper::get_resourcehash($url, TOOL_METADATA_RESOURCE_TYPE_URL), $metadataarray);
         }
 
         return $result;
