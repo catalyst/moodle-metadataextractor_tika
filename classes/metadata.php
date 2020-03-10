@@ -38,6 +38,11 @@ defined('MOODLE_INTERNAL') || die();
 class metadata extends \tool_metadata\metadata {
 
     /**
+     * The table name where metadata records are stored.
+     */
+    const TABLE = 'metadataextractor_tika';
+
+    /**
      * @var string The person or organization primarily responsible for creating the
      * intellectual content of the resource this metadata represents.
      */
@@ -90,16 +95,6 @@ class metadata extends \tool_metadata\metadata {
      * @var string The language of the resource.
      */
     public $language;
-
-    /**
-     * @var int The UNIX timestamp of when instance was created.
-     */
-    public $timecreated;
-
-    /**
-     * @var int The UNIX timestamp of when instance was last modified.
-     */
-    public $timemodified;
 
     protected function metadata_key_map() {
 
