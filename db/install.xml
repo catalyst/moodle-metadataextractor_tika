@@ -7,7 +7,7 @@
     <TABLE NAME="metadataextractor_tika" COMMENT="Default comment for metadataextractor_tika, please edit me">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
-        <FIELD NAME="contenthash" TYPE="char" LENGTH="40" NOTNULL="true" SEQUENCE="false" COMMENT="A unique identifier associated with the resource based on SHA1 hash of resource content."/>
+        <FIELD NAME="resourcehash" TYPE="char" LENGTH="40" NOTNULL="true" SEQUENCE="false" COMMENT="A unique identifier associated with the resource based on SHA1 hash of resource content or content identifier."/>
         <FIELD NAME="format" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The MIME type of the resource, in accordance with IANA Media Types."/>
         <FIELD NAME="type" TYPE="char" LENGTH="40" NOTNULL="false" SEQUENCE="false" COMMENT="One of the Dublin Core Metadata Initiative Type Vocabulary types."/>
         <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
@@ -24,7 +24,7 @@
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" />
-        <KEY NAME="contenthash" TYPE="unique" FIELDS="contenthash"/>
+        <KEY NAME="resourcehash" TYPE="unique" FIELDS="resourcehash"/>
       </KEYS>
     </TABLE>
   </TABLES>

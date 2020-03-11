@@ -24,12 +24,17 @@
 
 namespace metadataextractor_tika;
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Psr7\Response;
 use stored_file;
 use tool_metadata\extraction_exception;
 
 defined('MOODLE_INTERNAL') || die();
 
+global $CFG;
 require_once($CFG->dirroot . '/local/aws/sdk/aws-autoloader.php');
+require_once($CFG->dirroot . '/mod/url/locallib.php');
 
 /**
  * Class for making API requests to a Tika server.
@@ -46,6 +51,11 @@ class server {
     private $client;
 
     /**
+     * @var string the base URI of the tika server to make HTTP requests to.
+     */
+    private $baseuri;
+
+    /**
      * Server constructor.
      *
      * @param null|\GuzzleHttp\HandlerStack $handlerstack optional stack of handlers for middleware or testing mocks.
@@ -54,25 +64,35 @@ class server {
      */
     public function __construct($handlerstack = null) {
         global $CFG;
-        
-        if (!empty($CFG->tikaserverhost)) {
-            $baseuri = $CFG->tikaserverhost;
-            if (!empty($CFG->tikaserverport)) {
-                $baseuri .= ':' . $CFG->tikaserverport;
+
+        $host = get_config('metadataextractor_tika', 'tikaserverhost');
+        $port = get_config('metadataextractor_tika', 'tikaserverport');
+
+        if (!empty($host)) {
+            $baseuri = $host;
+            if (!empty($port)) {
+                $baseuri .= ':' . $port;
             }
-        } else {
+        } elseif (empty($handlerstack)) {
             throw new extraction_exception('error:server:nohostset', 'metadataextractor_tika');
+        } else {
+            // We have a handler, running tests so set base URI to default.
+            $baseuri = $CFG->wwwroot;
         }
 
         // Check that local_aws plugin is installed as this is a dependency for tika server configuration.
         $dependencyinfo = \core_plugin_manager::instance()->get_plugin_info('local_aws');
         if (empty($dependencyinfo)) {
-            throw new extraction_exception('error:server:missingdependency', 'metadataextractor_tika', '',
+            throw new extraction_exception('error:missingdependency', 'metadataextractor_tika', '',
                 'local_aws');
         }
 
-        $params = ['base_uri' => $baseuri];
+        // We don't add the baseuri as a param because we may want to use this client
+        // to make other external calls, instead pass it into client requests.
+        $this->baseuri = $baseuri;
+        $params = [];
 
+        // Add handlerstack for testing and any middleware.
         if (!empty($handlerstack)) {
             $params['handler'] = $handlerstack;
         }
@@ -81,9 +101,30 @@ class server {
     }
 
     /**
+     * Test that server is ready to perform requests.
+     *
+     * @throws \tool_metadata\extraction_exception
+     */
+    public function is_ready() {
+        $result = false;
+
+        try {
+            // This tika server api call should return HELLO message.
+            $response = $this->client->request('GET', "$this->baseuri/tika");
+            if ($response->getStatusCode() == 200) {
+                $result = true;
+            }
+        } catch (GuzzleException $ex) {
+            throw new extraction_exception('error:connectionerror', 'metadataextractor_tika');
+        }
+
+        return $result;
+    }
+
+    /**
      * Get json encoded file metadata from Tika server.
      *
-     * @param \stored_file $file
+     * @param \stored_file $file the file to extract metadata for.
      *
      * @return string|false $result json encoded metadata or false if metadata could not be extracted.
      * @throws \tool_metadata\extraction_exception
@@ -91,7 +132,7 @@ class server {
     public function get_file_metadata(stored_file $file) {
 
         try {
-            $response = $this->client->request('POST', '/meta/form', [
+            $response = $this->client->request('POST', "$this->baseuri/meta/form", [
                 'headers' => ['Accept' => 'application/json'],
                 'multipart' => [
                     [
@@ -109,11 +150,68 @@ class server {
             throw new extraction_exception('error:server:httprequest', 'metadataextractor_tika', '', null, $debuginfo);
         }
 
+        $result = $this->extract_response_metadata($response);
+
+        return $result;
+    }
+
+    /**
+     * Get json encoded url metadata from Tika server.
+     *
+     * @param $url object mod_url instance.
+     *
+     * @return object result object containing {'metadata' => string, 'contenthash' => string, 'success' => bool}
+     * @throws \tool_metadata\extraction_exception
+     */
+    public function get_url_metadata($url) {
+
+        $cm = get_coursemodule_from_instance('url', $url->id, $url->course, false, MUST_EXIST);
+        $fullurl = url_get_full_url($url, $cm, $url->course);
+
+        try {
+            // Get the url content to pass to tika, only allows up to 5 redirects.
+            $urlresponse = $this->client->request('GET', $fullurl);
+            $stream = $urlresponse->getBody();
+
+            // Use the Tika Server meta/form path, tika/form is not support for HTML docs.
+            $tikaresponse = $this->client->request('POST', "$this->baseuri/meta/form", [
+                'headers' => ['Accept' => 'application/json'],
+                'multipart' => [
+                    [
+                        'name' => $url->name,
+                        'contents' => $stream,
+                    ],
+                ],
+            ]);
+        } catch (\Exception $e) {
+            if (method_exists($e, 'getReasonPhrase')) {
+                $debuginfo = $e->getReasonPhrase();
+            } else {
+                $debuginfo = $e->getMessage();
+            }
+            throw new extraction_exception('error:server:httprequest', 'metadataextractor_tika', '', null, $debuginfo);
+        }
+
+        $result = $this->extract_response_metadata($tikaresponse);
+
+        return $result;
+    }
+
+    /**
+     * Extract metadata string from content of response.
+     *
+     * @param \GuzzleHttp\Psr7\Response $response
+     *
+     * @return string|false json string of metadata or false if failed.
+     */
+    private function extract_response_metadata(\GuzzleHttp\Psr7\Response $response) {
+
         if ($response->getStatusCode() == 200) {
             $result = $response->getBody()->getContents();
         } else {
-            $result = false;
+            throw new extraction_exception('error:server', 'metadataextractor_tika');
         }
+
         return $result;
     }
 
