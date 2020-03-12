@@ -42,6 +42,16 @@ require_once($CFG->dirroot . '/admin/tool/metadata/constants.php');
 class tika_helper {
 
     /**
+     * Entity header for mimetype, RFC 7233 and RFC 7231.
+     */
+    const MIMETYPE_KEY = 'Content-Type';
+
+    /**
+     * Mimetype is not known for resource.
+     */
+    const MIMETYPE_UNKNOWN = 'unknown';
+
+    /**
      * File type - portable document format.
      */
     const FILETYPE_PDF = 'pdf';
@@ -90,77 +100,6 @@ class tika_helper {
      * File type - could not be determined.
      */
     const FILETYPE_OTHER = 'other';
-
-    /**
-     * Metadata type - An aggregation of resources.
-     */
-    const DCMI_TYPE_COLLECTION = 'collection';
-
-    /**
-     * Metadata type - Data encoded in a defined structure.
-     */
-    const DCMI_TYPE_DATASET = 'dataset';
-
-    /**
-     * Metadata type - A non-persistent, time-based occurrence.
-     */
-    const DCMI_TYPE_EVENT = 'event';
-
-    /**
-     * Metadata type - A resource requiring interaction from the user to be understood, executed, or experienced.
-     */
-    const DCMI_TYPE_INTERACTIVE = 'interactiveresource';
-
-    /**
-     * Metadata type - A visual representation other than text.
-     */
-    const DCMI_TYPE_IMAGE = 'image';
-
-    /**
-     * Metadata type - A series of visual representations imparting an impression of motion when shown in succession.
-     */
-    const DCMI_TYPE_MOVINGIMAGE = 'movingimage';
-
-    /**
-     * Metadata type - An inanimate, three-dimensional object or substance.
-     */
-    const DCMI_TYPE_PHYSICAL = 'physicalobject';
-
-    /**
-     * Metadata type - A system that provides one or more functions.
-     */
-    const DCMI_TYPE_SERVICE = 'service';
-
-    /**
-     * Metadata type - A computer program in source or compiled form.
-     */
-    const DCMI_TYPE_SOFTWARE = 'software';
-
-    /**
-     * Metadata type - A resource primarily intended to be heard.
-     */
-    const DCMI_TYPE_SOUND = 'sound';
-
-    /**
-     * Metadata type - A static visual representation.
-     */
-    const DCMI_TYPE_STILLIMAGE = 'stillimage';
-
-    /**
-     * Metadata type - A resource consisting primarily of words for reading.
-     */
-    const DCMI_TYPE_TEXT = 'text';
-
-    /**
-     * A map of the mimetype groups to DCMI types.
-     */
-    const DCMI_TYPE_MIMETYPE_GROUP_MAP = [
-        self::DCMI_TYPE_MOVINGIMAGE => ['video', 'html_video', 'web_video'],
-        self::DCMI_TYPE_SOUND => ['audio', 'html_audio', 'web_audio', 'html_track'],
-        self::DCMI_TYPE_IMAGE => ['image', 'web_image'],
-        self::DCMI_TYPE_COLLECTION => ['archive'],
-        self::DCMI_TYPE_TEXT => ['pdf', 'web_file', 'document', 'spreadsheet', 'presentation'],
-    ];
 
     /**
      * Mapping of tika_helper filetypes to tika supported mimetypes.
@@ -528,12 +467,14 @@ class tika_helper {
     public static function get_filetype(string $mimetype) {
         $filetype = self::FILETYPE_OTHER;
 
-        foreach (self::FILETYPE_MIMETYPE_MAP as $mappedfiletype => $mappedmimetypes) {
-            foreach ($mappedmimetypes as $mappedmimetype) {
-                if ($mimetype == $mappedmimetype) {
-                    // We found our filetype, end here.
-                    $filetype = $mappedfiletype;
-                    break;
+        if ($mimetype != static::MIMETYPE_UNKNOWN) {
+            foreach (self::FILETYPE_MIMETYPE_MAP as $mappedfiletype => $mappedmimetypes) {
+                foreach ($mappedmimetypes as $mappedmimetype) {
+                    if ($mimetype == $mappedmimetype) {
+                        // We found our filetype, end here.
+                        $filetype = $mappedfiletype;
+                        break;
+                    }
                 }
             }
         }
@@ -560,5 +501,23 @@ class tika_helper {
         }
 
         return $class;
+    }
+
+    /**
+     * Get the mimetype of a resource from it's raw metadata.
+     *
+     * @param array $rawmetadata raw metadata extracted from Tika.
+     *
+     * @return string $mimetype the mimetype or
+     */
+    public static function get_raw_metadata_mimetype(array $rawmetadata) {
+
+        if (in_array(static::MIMETYPE_KEY, array_keys($rawmetadata))) {
+            $mimetype = $rawmetadata[static::MIMETYPE_KEY];
+        } else {
+            $mimetype = static::MIMETYPE_UNKNOWN;
+        }
+
+        return $mimetype;
     }
 }
