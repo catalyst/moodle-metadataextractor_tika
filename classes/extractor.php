@@ -179,7 +179,6 @@ class extractor extends \tool_metadata\extractor {
         return $result;
     }
 
-
     /**
      * Extract file metadata using a tika server.
      *
@@ -251,47 +250,6 @@ class extractor extends \tool_metadata\extractor {
         }
 
         return $result;
-    }
-
-    public function get_metadata(string $resourcehash) {
-        global $DB;
-
-        // Get the standard metadata record so we can determine the type.
-        $record = $DB->get_record(static::METADATA_TABLE,
-            ['resourcehash' => $resourcehash]);
-
-        if (!empty($record)) {
-            if ($record->type == TOOL_METADATA_RESOURCE_TYPE_FILE) {
-                $filetype = tika_helper::get_filetype($record->format);
-
-
-            } else {
-
-            }
-        } else {
-            $metadata = null;
-        }
-
-        return $metadata;
-    }
-
-    public function create_metadata(metadata $metadata) {
-        global $DB;
-
-        $existingmetadata = $this->get_metadata($metadata->get_resourcehash());
-
-        if ($existingmetadata) {
-            $this->update_metadata($existingmetadata->id, $metadata, $extractor);
-        } else {
-            $id = $DB->insert_record(self::get_table(), $metadata);
-            $metadata->id = $id;
-        }
-
-        return $metadata;
-    }
-
-    public function update_metadata(int $id, metadata $metadata) {
-
     }
 
     /**
