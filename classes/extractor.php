@@ -64,11 +64,6 @@ class extractor extends \tool_metadata\extractor {
     const SERVICETYPE_SERVER = 'server';
 
     /**
-     * The string used my Apache Tika in raw metadata to identify mimetype of resource parsed.
-     */
-    const TIKA_MIMETYPE_KEY = 'Content-Type';
-
-    /**
      * Get the configured servicetype from plugin config.
      *
      * @return string|false the set value or false if not set.
@@ -109,7 +104,7 @@ class extractor extends \tool_metadata\extractor {
         }
 
         if (!empty($metadataarray) && is_array($metadataarray)) {
-            $mimetype = $metadataarray[self::TIKA_MIMETYPE_KEY];
+            $mimetype = tika_helper::get_raw_metadata_mimetype($metadataarray);
             $class = tika_helper::get_metadata_class($mimetype);
             $result = new $class(0, helper::get_resourcehash($file, TOOL_METADATA_RESOURCE_TYPE_FILE), $metadataarray);
         }
