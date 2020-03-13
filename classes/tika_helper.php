@@ -102,6 +102,11 @@ class tika_helper {
     const FILETYPE_OTHER = 'other';
 
     /**
+     * File types currently supported by metadataextractor_tika.
+     */
+    const SUPPORTED_FILETYPES = [self::FILETYPE_DOCUMENT, self::FILETYPE_PDF];
+
+    /**
      * Mapping of tika_helper filetypes to tika supported mimetypes.
      */
     const FILETYPE_MIMETYPE_MAP = [
@@ -493,9 +498,8 @@ class tika_helper {
     public static function get_metadata_class(string $mimetype) {
         $filetype = self::get_filetype($mimetype);
 
-        // TODO: Add support for all file types.
-        if ($filetype == self::FILETYPE_DOCUMENT) {
-            $class = '\metadataextractor_tika\metadata_' . self::FILETYPE_DOCUMENT;
+        if (self::is_filetype_supported($filetype)) {
+            $class = '\metadataextractor_tika\metadata_' . $filetype;
         } else {
             $class = '\metadataextractor_tika\metadata';
         }
@@ -519,5 +523,22 @@ class tika_helper {
         }
 
         return $mimetype;
+    }
+
+    /**
+     * Is a file type supported?
+     *
+     * @param string $filetype the filetype of file.
+     *
+     * @return bool true if currently supported, false otherwise.
+     */
+    public static function is_filetype_supported(string $filetype) {
+        $result = false;
+
+        if (in_array($filetype, static::SUPPORTED_FILETYPES)) {
+            $result = true;
+        }
+
+        return $result;
     }
 }
