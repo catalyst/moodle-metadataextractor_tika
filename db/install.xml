@@ -45,5 +45,17 @@
         <KEY NAME="resourcehash" TYPE="unique" FIELDS="resourcehash"/>
       </KEYS>
     </TABLE>
+    <TABLE NAME="tika_pdf_metadata" COMMENT="Supplementary table for tika metadata extracted from pdf file types">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="resourcehash" TYPE="char" LENGTH="40" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="pagecount" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="creationtool" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="pdfversion" TYPE="char" LENGTH="30" NOTNULL="false" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
   </TABLES>
 </XMLDB>
