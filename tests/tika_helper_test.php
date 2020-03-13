@@ -70,6 +70,35 @@ class metadataextractor_tika_helper_test extends advanced_testcase {
 
 
     /**
+     * Provider of supported file types.
+     *
+     * @return array
+     */
+    public function supported_filetypes_provider() {
+        return [
+            [\metadataextractor_tika\tika_helper::FILETYPE_DOCUMENT, true],
+            [\metadataextractor_tika\tika_helper::FILETYPE_PDF, true],
+            [\metadataextractor_tika\tika_helper::FILETYPE_IMAGE, false],
+            [\metadataextractor_tika\tika_helper::FILETYPE_AUDIO, false],
+            [\metadataextractor_tika\tika_helper::FILETYPE_VIDEO, false],
+            [\metadataextractor_tika\tika_helper::FILETYPE_SPREADSHEET, false],
+            [\metadataextractor_tika\tika_helper::FILETYPE_PRESENTATION, false],
+            [\metadataextractor_tika\tika_helper::FILETYPE_ARCHIVE, false],
+        ];
+    }
+
+    /**
+     * @dataProvider supported_filetypes_provider
+     * Test checking if filetype supported.
+     *
+     * @param string $filetype the filetype to test.
+     * @param bool $supported should the filetype be supported.
+     */
+    public function test_is_filetype_supported(string $filetype, bool $supported) {
+        $this->assertEquals($supported, \metadataextractor_tika\tika_helper::is_filetype_supported($filetype));
+    }
+
+    /**
      * @dataProvider filetype_provider
      *
      * @param $mimetype string the IANA mimetype
@@ -78,8 +107,7 @@ class metadataextractor_tika_helper_test extends advanced_testcase {
     public function test_get_metadata_class($mimetype, $classsubstring) {
         $actual = \metadataextractor_tika\tika_helper::get_metadata_class($mimetype);
 
-        // TODO: Update when support for extra file types is added.
-        if ($classsubstring != \metadataextractor_tika\tika_helper::FILETYPE_DOCUMENT) {
+        if (!in_array($classsubstring, \metadataextractor_tika\tika_helper::SUPPORTED_FILETYPES)) {
             $expected = '\metadataextractor_tika\metadata';
         } else {
             $expected = '\metadataextractor_tika\metadata_' . $classsubstring;
@@ -87,6 +115,4 @@ class metadataextractor_tika_helper_test extends advanced_testcase {
 
         $this->assertEquals($expected, $actual);
     }
-
-
 }

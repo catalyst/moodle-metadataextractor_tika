@@ -57,7 +57,7 @@ class metadata_pdf extends \metadataextractor_tika\metadata {
     protected function supplementary_key_map() {
         return [
             'pagecount' => ['Page-Count', 'meta:page-count', 'xmpTPg:NPages'],
-            'creationtool' => ['Line-Count', 'meta:line-count'],
+            'creationtool' => ['pdf:docinfo:creator_tool'],
             'pdfversion' => ['pdf:PDFVersion'],
         ];
     }
