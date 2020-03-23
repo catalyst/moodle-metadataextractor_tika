@@ -102,6 +102,16 @@ class metadata extends \tool_metadata\metadata {
     public $language;
 
     /**
+     * @var string date/time the resource metadata represents was created.
+     */
+    public $resourcecreated;
+
+    /**
+     * @var string date/time the resource metadata represents was modified.
+     */
+    public $resourcemodified;
+
+    /**
      * Get the supplementary table for metadata instance.
      *
      * @return string
@@ -169,6 +179,8 @@ class metadata extends \tool_metadata\metadata {
                 'extended-properties:Rights', 'extended-properties:rights', 'extended-properties:Copyright',
                 'extended-properties:copyright', 'extended-properties:License', 'extended-properties:licence'],
             'language' => ['dc:language', 'Language', 'language', 'meta:language'],
+            'resourcecreated' => ['dcterms:created', 'Creation-Date', 'created', 'meta:creation-date'],
+            'resourcemodified' => ['dcterms:modified', 'Last-Modified', 'modified', 'meta:save-date'],
         ];
     }
 
