@@ -32,7 +32,7 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @group      metadataextractor_tika
  */
-class server_test extends advanced_testcase {
+class metadataextractor_tika_server_test extends advanced_testcase {
 
     public function setUp() {
         $this->resetAfterTest();

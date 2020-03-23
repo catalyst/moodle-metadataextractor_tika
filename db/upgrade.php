@@ -18,7 +18,7 @@
  * Upgrade database for metadataextractor_tika.
  *
  * @package    tool_metadata
- * @copyright  2019 Tom Dickman <tomdickman@catalyst-au.net>
+ * @copyright  2020 Tom Dickman <tomdickman@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -53,6 +53,48 @@ function xmldb_metadataextractor_tika_upgrade($oldversion) {
 
         // Tika savepoint reached.
         upgrade_plugin_savepoint(true, 2020020600, 'metadataextractor', 'tika');
+    }
+
+    if ($oldversion < 2020030201) {
+        $table = new xmldb_table('metadataextractor_tika');
+        // Lenghten field title on table metadataextractor_tika.
+        $field = new xmldb_field('title', XMLDB_TYPE_CHAR, '1000', null, null, null, null, 'description');
+
+        // Launch change field type title.
+        $dbman->change_field_type($table, $field);
+
+        // Tika savepoint reached.
+        upgrade_plugin_savepoint(true, 2020030201, 'metadataextractor', 'tika');
+    }
+
+    if ($oldversion < 2020031101) {
+
+        // Define table tika_document to be created.
+        $table = new xmldb_table('tika_document_metadata');
+
+        // Adding fields to table tika_document_metadata.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('resourcehash', XMLDB_TYPE_CHAR, '40', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('pagecount', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('paragraphcount', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('linecount', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('wordcount', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('charactercount', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('charactercountwithspaces', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('manager', XMLDB_TYPE_CHAR, '500', null, null, null, null);
+        $table->add_field('company', XMLDB_TYPE_CHAR, '500', null, null, null, null);
+
+        // Adding keys to table tika_document_metadata.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('resourcehash', XMLDB_KEY_UNIQUE, ['resourcehash']);
+
+        // Conditionally launch create table for tika_document_metadata.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Tika savepoint reached.
+        upgrade_plugin_savepoint(true, 2020031101, 'metadataextractor', 'tika');
     }
 
     return true;

@@ -44,74 +44,14 @@ require_once($CFG->dirroot . '/mod/url/locallib.php');
 class extractor extends \tool_metadata\extractor {
 
     /**
-     * Metadata type - An aggregation of resources.
-     */
-    const DCMI_TYPE_COLLECTION = 'collection';
-
-    /**
-     * Metadata type - Data encoded in a defined structure.
-     */
-    const DCMI_TYPE_DATASET = 'dataset';
-
-    /**
-     * Metadata type - A non-persistent, time-based occurrence.
-     */
-    const DCMI_TYPE_EVENT = 'event';
-
-    /**
-     * Metadata type - A resource requiring interaction from the user to be understood, executed, or experienced.
-     */
-    const DCMI_TYPE_INTERACTIVE = 'interactiveresource';
-
-    /**
-     * Metadata type - A visual representation other than text.
-     */
-    const DCMI_TYPE_IMAGE = 'image';
-
-    /**
-     * Metadata type - A series of visual representations imparting an impression of motion when shown in succession.
-     */
-    const DCMI_TYPE_MOVINGIMAGE = 'movingimage';
-
-    /**
-     * Metadata type - An inanimate, three-dimensional object or substance.
-     */
-    const DCMI_TYPE_PHYSICAL = 'physicalobject';
-
-    /**
-     * Metadata type - A system that provides one or more functions.
-     */
-    const DCMI_TYPE_SERVICE = 'service';
-
-    /**
-     * Metadata type - A computer program in source or compiled form.
-     */
-    const DCMI_TYPE_SOFTWARE = 'software';
-
-    /**
-     * Metadata type - A resource primarily intended to be heard.
-     */
-    const DCMI_TYPE_SOUND = 'sound';
-
-    /**
-     * Metadata type - A static visual representation.
-     */
-    const DCMI_TYPE_STILLIMAGE = 'stillimage';
-
-    /**
-     * Metadata type - A resource consisting primarily of words for reading.
-     */
-    const DCMI_TYPE_TEXT = 'text';
-
-    /**
      * The plugin name.
      */
     const METADATAEXTRACTOR_NAME = 'tika';
 
     /**
-     * Table name for storing extracted metadata for this extractor.
+     * Default table name for storing extracted metadata for this extractor.
      */
-    const METADATA_TABLE = 'metadataextractor_tika';
+    const METADATA_BASE_TABLE = 'metadataextractor_tika';
 
     /**
      * Local Tika service type: Java and a Tika application jar are installed locally, plugin will use direct commands to CLI.
@@ -122,17 +62,6 @@ class extractor extends \tool_metadata\extractor {
      * Server Tika service type: Tika is being run on a server, plugin will communicate via Tika REST API endpoint.
      */
     const SERVICETYPE_SERVER = 'server';
-
-    /**
-     * A map of the Moodle mimetype groups to DCMI types.
-     */
-    const DCMI_TYPE_MIMETYPE_GROUP_MAP = [
-        self::DCMI_TYPE_MOVINGIMAGE => ['video', 'html_video', 'web_video'],
-        self::DCMI_TYPE_SOUND => ['audio', 'html_audio', 'web_audio', 'html_track'],
-        self::DCMI_TYPE_IMAGE => ['image', 'web_image'],
-        self::DCMI_TYPE_COLLECTION => ['archive'],
-        self::DCMI_TYPE_TEXT => ['web_file', 'document', 'spreadsheet', 'presentation'],
-    ];
 
     /**
      * Get the configured servicetype from plugin config.
@@ -175,7 +104,9 @@ class extractor extends \tool_metadata\extractor {
         }
 
         if (!empty($metadataarray) && is_array($metadataarray)) {
-            $result = new metadata(helper::get_resourcehash($file, TOOL_METADATA_RESOURCE_TYPE_FILE), $metadataarray, true);
+            $mimetype = tika_helper::get_raw_metadata_mimetype($metadataarray);
+            $class = tika_helper::get_metadata_class($mimetype);
+            $result = new $class(0, helper::get_resourcehash($file, TOOL_METADATA_RESOURCE_TYPE_FILE), $metadataarray);
         }
 
         return $result;
@@ -215,7 +146,7 @@ class extractor extends \tool_metadata\extractor {
         }
 
         if (!empty($metadataarray) && is_array($metadataarray)) {
-            $result = new metadata(helper::get_resourcehash($url, TOOL_METADATA_RESOURCE_TYPE_URL), $metadataarray, true);
+            $result = new metadata(0, helper::get_resourcehash($url, TOOL_METADATA_RESOURCE_TYPE_URL), $metadataarray);
         }
 
         return $result;
@@ -245,7 +176,6 @@ class extractor extends \tool_metadata\extractor {
 
         return $result;
     }
-
 
     /**
      * Extract file metadata using a tika server.

@@ -22,11 +22,10 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 use metadataextractor_tika\extractor;
-use tool_metadata\mock_file_builder;
 
 defined('MOODLE_INTERNAL') || die();
 
-
+require_once (__DIR__ . '/../../../classes/mock_file_builder.php');
 
 /**
  * Unit tests for tool_metadata extractor class.
@@ -36,7 +35,7 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @group      metadataextractor_tika
  */
-class extractor_test extends advanced_testcase {
+class metadataextractor_tika_extractor_test extends advanced_testcase {
 
     public function setUp() {
         $this->resetAfterTest();
@@ -71,9 +70,8 @@ class extractor_test extends advanced_testcase {
      * Test extracting metadata for a pdf file resource in Moodle.
      */
     public function test_extract_file_metadata_pdf() {
-        global $CFG;
 
-        $file = mock_file_builder::mock_pdf();
+        [$metadata, $file] = \tool_metadata\mock_file_builder::mock_pdf();
         $extractor = new extractor();
 
         // Make sure we have the correct configuration and dependencies to carry out this test.
@@ -82,9 +80,27 @@ class extractor_test extends advanced_testcase {
         $result = $extractor->extract_file_metadata($file);
 
         $this->assertNotEmpty($result);
-        $this->assertEquals('Moodle ' . $CFG->release, $result->creator);
-        $this->assertEquals('Test PDF', $result->title);
+        $this->assertEquals($metadata['Creator'], $result->creator);
+        $this->assertEquals($metadata['Title'], $result->title);
         $this->assertEquals('en', $result->language);
+    }
+
+    /**
+     * Test extracting metadata for a document type file resource.
+     */
+    public function test_extract_file_metadata_document() {
+        list($expectedmetadata, $file) = \tool_metadata\mock_file_builder::mock_document();
+
+        $extractor = new extractor();
+
+        // Make sure we have the correct configuration and dependencies to carry out this test.
+        $this->can_test_extraction($extractor);
+
+        $result = $extractor->extract_file_metadata($file);
+
+        $this->assertNotEmpty($result);
+        $this->assertInstanceOf(\metadataextractor_tika\metadata_document::class, $result);
+        $this->assertEquals($expectedmetadata['Title'], $result->title);
     }
 
     /**
