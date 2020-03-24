@@ -15,10 +15,10 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * The metadata model for document files.
+ * The metadata model for pdf files.
  *
  * @package    tool_metadata
- * @copyright  2019 Tom Dickman <tomdickman@catalyst-au.net>
+ * @copyright  2020 Tom Dickman <tomdickman@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -27,12 +27,10 @@ namespace metadataextractor_tika;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * The metadata model for document files.
- *
- * This model follows a modified version of Dublin Core tailored for Moodle.
+ * The metadata model for pdf files.
  *
  * @package    tool_metadata
- * @copyright  2019 Tom Dickman <tomdickman@catalyst-au.net>
+ * @copyright  2020 Tom Dickman <tomdickman@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class metadata_pdf extends \metadataextractor_tika\metadata {
