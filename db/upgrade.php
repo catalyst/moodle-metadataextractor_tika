@@ -111,6 +111,7 @@ function xmldb_metadataextractor_tika_upgrade($oldversion) {
 
         // Adding keys to table tika_pdf_metadata.
         $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('resourcehash', XMLDB_KEY_UNIQUE, ['resourcehash']);
 
         // Conditionally launch create table for tika_pdf_metadata.
         if (!$dbman->table_exists($table)) {

@@ -57,6 +57,7 @@
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="resourcehash" TYPE="unique" FIELDS="resourcehash"/>
       </KEYS>
     </TABLE>
   </TABLES>
