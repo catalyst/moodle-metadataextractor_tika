@@ -57,7 +57,7 @@ function xmldb_metadataextractor_tika_upgrade($oldversion) {
 
     if ($oldversion < 2020030201) {
         $table = new xmldb_table('metadataextractor_tika');
-        // Lenghten field title on table metadataextractor_tika.
+        // Lengthen field title on table metadataextractor_tika.
         $field = new xmldb_field('title', XMLDB_TYPE_CHAR, '1000', null, null, null, null, 'description');
 
         // Launch change field type title.
@@ -96,6 +96,44 @@ function xmldb_metadataextractor_tika_upgrade($oldversion) {
         // Tika savepoint reached.
         upgrade_plugin_savepoint(true, 2020031101, 'metadataextractor', 'tika');
     }
+
+    if ($oldversion < 2020031301) {
+
+        // Define table tika_pdf_metadata to be created.
+        $table = new xmldb_table('tika_pdf_metadata');
+
+        // Adding fields to table tika_pdf_metadata.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('resourcehash', XMLDB_TYPE_CHAR, '40', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('pagecount', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('creationtool', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+        $table->add_field('pdfversion', XMLDB_TYPE_CHAR, '30', null, null, null, null);
+
+        // Adding keys to table tika_pdf_metadata.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('resourcehash', XMLDB_KEY_UNIQUE, ['resourcehash']);
+
+        // Conditionally launch create table for tika_pdf_metadata.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Tika savepoint reached.
+        upgrade_plugin_savepoint(true, 2020031301, 'metadataextractor', 'tika');
+    }
+
+    if ($oldversion < 2020031302) {
+        $table = new xmldb_table('metadataextractor_tika');
+        // Lengthen field creator on table metadataextractor_tika.
+        $field = new xmldb_field('creator', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'subject');
+
+        // Launch change field type title.
+        $dbman->change_field_type($table, $field);
+
+        // Tika savepoint reached.
+        upgrade_plugin_savepoint(true, 2020031302, 'metadataextractor', 'tika');
+    }
+
 
     return true;
 }

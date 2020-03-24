@@ -13,7 +13,7 @@
         <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="title" TYPE="char" LENGTH="1000" NOTNULL="false" SEQUENCE="false" COMMENT="The name given to the resource, usually by the creator or publisher."/>
         <FIELD NAME="subject" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The topic of the resource.  Typically, subject will be expressed as keywords or phrases that describe the subject or content of the resource."/>
-        <FIELD NAME="creator" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" COMMENT="The person or organization primarily responsible for creating the intellectual content of the resource this metadata represents."/>
+        <FIELD NAME="creator" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The person or organization primarily responsible for creating the intellectual content of the resource this metadata represents."/>
         <FIELD NAME="contributor" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Persons or organizations not specified in the creator who have made significant intellectual contributions to the resource but whose contribution is secondary to any person or organization specified in creator."/>
         <FIELD NAME="publisher" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The entity responsible for making the resource available in its present form, such as a publishing house, a university department, or a corporate entity."/>
         <FIELD NAME="rights" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="A rights management statement, an identifier that links to a rights management statement, or an identifier that links to a service providing information about rights management for the resource."/>
@@ -39,6 +39,19 @@
         <FIELD NAME="charactercountwithspaces" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="manager" TYPE="char" LENGTH="500" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="company" TYPE="char" LENGTH="500" NOTNULL="false" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="resourcehash" TYPE="unique" FIELDS="resourcehash"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="tika_pdf_metadata" COMMENT="Supplementary table for tika metadata extracted from pdf file types">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="resourcehash" TYPE="char" LENGTH="40" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="pagecount" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="creationtool" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="pdfversion" TYPE="char" LENGTH="30" NOTNULL="false" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
