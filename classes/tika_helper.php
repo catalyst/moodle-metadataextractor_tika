@@ -111,6 +111,7 @@ class tika_helper {
         self::FILETYPE_AUDIO,
         self::FILETYPE_VIDEO,
         self::FILETYPE_SPREADSHEET,
+        self::FILETYPE_PRESENTATION,
     ];
 
     /**
