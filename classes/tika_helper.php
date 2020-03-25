@@ -107,8 +107,9 @@ class tika_helper {
     const SUPPORTED_FILETYPES = [
         self::FILETYPE_DOCUMENT,
         self::FILETYPE_PDF,
+        self::FILETYPE_IMAGE,
         self::FILETYPE_AUDIO,
-        self::FILETYPE_VIDEO
+        self::FILETYPE_VIDEO,
     ];
 
     /**
