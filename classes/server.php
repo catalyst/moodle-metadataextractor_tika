@@ -132,14 +132,9 @@ class server {
     public function get_file_metadata(stored_file $file) {
 
         try {
-            $response = $this->client->request('POST', "$this->baseuri/meta/form", [
+            $response = $this->client->request('PUT', "$this->baseuri/meta", [
                 'headers' => ['Accept' => 'application/json'],
-                'multipart' => [
-                    [
-                        'name' => $file->get_filename(),
-                        'contents' => $file->get_content_file_handle(),
-                    ],
-                ],
+                'body' => $file->get_content_file_handle(),
             ]);
         } catch (\Exception $e) {
             if (method_exists($e, 'getReasonPhrase')) {
