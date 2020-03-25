@@ -109,7 +109,8 @@ class tika_helper {
         self::FILETYPE_PDF,
         self::FILETYPE_IMAGE,
         self::FILETYPE_AUDIO,
-        self::FILETYPE_VIDEO
+        self::FILETYPE_VIDEO,
+        self::FILETYPE_SPREADSHEET,
     ];
 
     /**
