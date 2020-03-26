@@ -259,6 +259,39 @@ function xmldb_metadataextractor_tika_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2020032502, 'metadataextractor', 'tika');
     }
 
+    if ($oldversion < 2020032601) {
+
+        // Define table tika_presentation_metadata to be created.
+        $table = new xmldb_table('tika_presentation_metadata');
+
+        // Adding fields to table tika_presentation_metadata.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('resourcehash', XMLDB_TYPE_CHAR, '40', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('slidecount', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('paragraphcount', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('wordcount', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('lastauthor', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+        $table->add_field('application', XMLDB_TYPE_CHAR, '100', null, null, null, null);
+        $table->add_field('appversion', XMLDB_TYPE_CHAR, '50', null, null, null, null);
+        $table->add_field('edittime', XMLDB_TYPE_CHAR, '50', null, null, null, null);
+        $table->add_field('revisionnumber', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('notecount', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('format', XMLDB_TYPE_CHAR, '100', null, null, null, null);
+        $table->add_field('manager', XMLDB_TYPE_CHAR, '500', null, null, null, null);
+        $table->add_field('company', XMLDB_TYPE_CHAR, '500', null, null, null, null);
+
+        // Adding keys to table tika_presentation_metadata.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('resourcehash', XMLDB_KEY_UNIQUE, ['resourcehash']);
+
+        // Conditionally launch create table for tika_presentation_metadata.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Tika savepoint reached.
+        upgrade_plugin_savepoint(true, 2020032601, 'metadataextractor', 'tika');
+    }
 
     return true;
 }
