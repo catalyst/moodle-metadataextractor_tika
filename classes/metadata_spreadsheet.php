@@ -66,6 +66,10 @@ class metadata_spreadsheet extends \metadataextractor_tika\metadata {
             'application' => ['Application-Name', 'extended-properties:Application'],
             'appversion' => ['Application-Version', 'extended-properties:AppVersion'],
             'lastauthor' => ['Last-Author', 'meta:last-author'],
+            'manager' => ['Manager', 'meta:manager', 'meta:Manager', 'custom:manager', 'custom:Manager',
+                'extended-properties:Manager', 'extended-properties:manager'],
+            'company' => ['Company', 'meta:company', 'meta:Company', 'custom:Company', 'custom:company',
+                'extended-properties:Company', 'extended-properties:company'],
         ];
     }
 }

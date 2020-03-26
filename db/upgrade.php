@@ -291,5 +291,29 @@ function xmldb_metadataextractor_tika_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2020032601, 'metadataextractor', 'tika');
     }
 
+    if ($oldversion < 2020032603) {
+
+        // Define field manager to be added to tika_spreadsheet_metadata.
+        $table = new xmldb_table('tika_spreadsheet_metadata');
+        $field = new xmldb_field('manager', XMLDB_TYPE_CHAR, '500', null, null, null, null, 'lastauthor');
+
+        // Conditionally launch add field manager.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field company to be added to tika_spreadsheet_metadata.
+        $table = new xmldb_table('tika_spreadsheet_metadata');
+        $field = new xmldb_field('company', XMLDB_TYPE_CHAR, '500', null, null, null, null, 'manager');
+
+        // Conditionally launch add field company.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Tika savepoint reached.
+        upgrade_plugin_savepoint(true, 2020032603, 'metadataextractor', 'tika');
+    }
+
     return true;
 }
