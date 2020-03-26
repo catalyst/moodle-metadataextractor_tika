@@ -103,5 +103,21 @@
         <KEY NAME="resourcehash" TYPE="unique" FIELDS="resourcehash"/>
       </KEYS>
     </TABLE>
+    <TABLE NAME="tika_spreadsheet_metadata" COMMENT="Supplementary table for tika metadata extracted from spreadsheet file types">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="resourcehash" TYPE="char" LENGTH="40" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="revisionnumber" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="application" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="appversion" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="lastauthor" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="manager" TYPE="char" LENGTH="500" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="company" TYPE="char" LENGTH="500" NOTNULL="false" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="resourcehash" TYPE="unique" FIELDS="resourcehash"/>
+      </KEYS>
+    </TABLE>
   </TABLES>
 </XMLDB>

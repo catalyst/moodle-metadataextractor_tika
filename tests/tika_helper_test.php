@@ -81,7 +81,7 @@ class metadataextractor_tika_helper_test extends advanced_testcase {
             [\metadataextractor_tika\tika_helper::FILETYPE_IMAGE, true],
             [\metadataextractor_tika\tika_helper::FILETYPE_AUDIO, true],
             [\metadataextractor_tika\tika_helper::FILETYPE_VIDEO, true],
-            [\metadataextractor_tika\tika_helper::FILETYPE_SPREADSHEET, false],
+            [\metadataextractor_tika\tika_helper::FILETYPE_SPREADSHEET, true],
             [\metadataextractor_tika\tika_helper::FILETYPE_PRESENTATION, false],
             [\metadataextractor_tika\tika_helper::FILETYPE_ARCHIVE, false],
         ];
