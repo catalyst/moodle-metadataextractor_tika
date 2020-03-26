@@ -35,11 +35,15 @@ list($options, $unrecognized) = cli_get_params(
         'fileid' => 0,
         'help' => false,
         'showdebugging' => false,
-        'json' => false
+        'json' => false,
+        'metadata' => false,
+        'text' => false
     ], [
         'f' => 'fileid',
         'h' => 'help',
-        'j' => 'json'
+        'j' => 'json',
+        'm' => 'metadata',
+        't' => 'text'
     ]
 );
 
@@ -53,18 +57,22 @@ if ($options['help']) {
 <<<HELP
 Extract json metadata from a file using a remote tika server using RESTful API.
 
+Required:
+-f --fileid              The file id of the Moodle instance file to extract metadata for
+-j --json                Print metadata as a raw json string OR
+-m --metadata            Print metadata as a vardump OR
+-t --text                Print Tika extracted text content of file
+
 Options:
 -h, --help               Print out this help
--f --fileid (required)   The file id of the Moodle instance file to extract metadata for
 --showdebugging          Print debugging statements
--j --json                Print metadata as a raw json string
---host (optional)        Set the hostname or IP address of the tika server. 
-                         WARNING: This will change the plugin configured host
---port (optional)        Set the port number on the host where tika server API is exposed
-                         WARNING: This will change the plugin configured port number 
+--host                   Set the hostname or IP address of the tika server. 
+                         Note: Required if not set in Moodle instance
+--port                   Set the port number on the host where tika server API is exposed
+                         Note: Required if not set in Moodle instance
 
 Example:
-\$ php admin/tool/metadata/extractor/tika/cli/server_extract.php -f=10999
+\$ php admin/tool/metadata/extractor/tika/cli/server_extract.php -f=10999 -m
 HELP
     );
     exit(0);
@@ -116,11 +124,25 @@ if (!$server->is_ready()) {
     exit(1);
 }
 
-$jsonmetadata = $server->get_file_metadata($file);
-$metadata = json_decode($jsonmetadata, true);
-if (empty($options['json'])) {
-    mtrace(var_dump($metadata));
+if (!empty($options['metadata']) || !empty($options['json']) ) {
+
+    $jsonmetadata = $server->get_file_metadata($file);
+    $metadata = json_decode($jsonmetadata, true);
+    if (empty($options['json'])) {
+        mtrace(var_dump($metadata));
+    } else {
+        mtrace($jsonmetadata);
+    }
+    exit(0);
+
+} elseif (!empty($options['text'])) {
+
+    $content = $server->get_file_content($file);
+    mtrace($content);
+    exit(0);
+
 } else {
-    mtrace($jsonmetadata);
+    mtrace('No valid output format selected, much choose either -j, -m or -t option.');
+    mtrace('See help for further information: \$ php admin/tool/metadata/extractor/tika/cli/server_extract.php --help');
+    exit(1);
 }
-exit(0);
