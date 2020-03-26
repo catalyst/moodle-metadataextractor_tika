@@ -131,10 +131,12 @@ class server {
      */
     public function get_file_metadata(stored_file $file) {
 
+        $body = \GuzzleHttp\Psr7\stream_for($file->get_content_file_handle());
+
         try {
             $response = $this->client->request('PUT', "$this->baseuri/meta", [
                 'headers' => ['Accept' => 'application/json'],
-                'body' => $file->get_content_file_handle(),
+                'body' => $body,
             ]);
         } catch (\Exception $e) {
             if (method_exists($e, 'getReasonPhrase')) {
