@@ -243,6 +243,8 @@ function xmldb_metadataextractor_tika_upgrade($oldversion) {
         $table->add_field('application', XMLDB_TYPE_CHAR, '100', null, null, null, null);
         $table->add_field('appversion', XMLDB_TYPE_CHAR, '50', null, null, null, null);
         $table->add_field('lastauthor', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+        $table->add_field('manager', XMLDB_TYPE_CHAR, '500', null, null, null, null);
+        $table->add_field('company', XMLDB_TYPE_CHAR, '500', null, null, null, null);
 
         // Adding keys to table tika_spreadsheet_metadata.
         $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
