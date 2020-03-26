@@ -78,7 +78,7 @@ class metadataextractor_tika_helper_test extends advanced_testcase {
         return [
             [\metadataextractor_tika\tika_helper::FILETYPE_DOCUMENT, true],
             [\metadataextractor_tika\tika_helper::FILETYPE_PDF, true],
-            [\metadataextractor_tika\tika_helper::FILETYPE_IMAGE, false],
+            [\metadataextractor_tika\tika_helper::FILETYPE_IMAGE, true],
             [\metadataextractor_tika\tika_helper::FILETYPE_AUDIO, false],
             [\metadataextractor_tika\tika_helper::FILETYPE_VIDEO, false],
             [\metadataextractor_tika\tika_helper::FILETYPE_SPREADSHEET, false],

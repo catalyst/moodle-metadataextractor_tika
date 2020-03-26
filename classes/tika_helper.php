@@ -104,7 +104,11 @@ class tika_helper {
     /**
      * File types currently supported by metadataextractor_tika.
      */
-    const SUPPORTED_FILETYPES = [self::FILETYPE_DOCUMENT, self::FILETYPE_PDF];
+    const SUPPORTED_FILETYPES = [
+        self::FILETYPE_DOCUMENT,
+        self::FILETYPE_PDF,
+        self::FILETYPE_IMAGE,
+    ];
 
     /**
      * Mapping of tika_helper filetypes to tika supported mimetypes.
