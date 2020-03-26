@@ -74,5 +74,34 @@
         <KEY NAME="resourcehash" TYPE="unique" FIELDS="resourcehash"/>
       </KEYS>
     </TABLE>
+    <TABLE NAME="tika_audio_metadata" COMMENT="Supplementary table for tika metadata extracted from audio file types">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="resourcehash" TYPE="char" LENGTH="40" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="duration" TYPE="char" LENGTH="25" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="samplerate" TYPE="char" LENGTH="25" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="location" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="resourcehash" TYPE="unique" FIELDS="resourcehash"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="tika_video_metadata" COMMENT="Supplementary table for tika metadata extracted from video file types">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="resourcehash" TYPE="char" LENGTH="40" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="height" TYPE="char" LENGTH="15" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="width" TYPE="char" LENGTH="15" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="duration" TYPE="char" LENGTH="25" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="samplerate" TYPE="char" LENGTH="25" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="framesize" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="location" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="resourcehash" TYPE="unique" FIELDS="resourcehash"/>
+      </KEYS>
+    </TABLE>
   </TABLES>
 </XMLDB>
