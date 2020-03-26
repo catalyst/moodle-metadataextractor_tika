@@ -150,7 +150,7 @@ class server {
             throw new extraction_exception('error:server:httprequest', 'metadataextractor_tika', '', null, $debuginfo);
         }
 
-        $result = $this->extract_response_metadata($response);
+        $result = $this->extract_response_content($response);
 
         return $result;
     }
@@ -174,14 +174,9 @@ class server {
             $stream = $urlresponse->getBody();
 
             // Use the Tika Server meta/form path, tika/form is not support for HTML docs.
-            $tikaresponse = $this->client->request('POST', "$this->baseuri/meta/form", [
+            $tikaresponse = $this->client->request('PUT', "$this->baseuri/meta", [
                 'headers' => ['Accept' => 'application/json'],
-                'multipart' => [
-                    [
-                        'name' => $url->name,
-                        'contents' => $stream,
-                    ],
-                ],
+                'body' => $stream,
             ]);
         } catch (\Exception $e) {
             if (method_exists($e, 'getReasonPhrase')) {
@@ -192,10 +187,40 @@ class server {
             throw new extraction_exception('error:server:httprequest', 'metadataextractor_tika', '', null, $debuginfo);
         }
 
-        $result = $this->extract_response_metadata($tikaresponse);
+        $result = $this->extract_response_content($tikaresponse);
 
         return $result;
     }
+
+    /**
+     * Get Tika extracted content from file.
+     *
+     * @param \stored_file $file the file to extract content for.
+     *
+     * @return string|false $result content or false if content could not be extracted.
+     * @throws \tool_metadata\extraction_exception
+     */
+    public function get_file_content(stored_file $file) {
+
+        try {
+            $response = $this->client->request('PUT', "$this->baseuri/tika", [
+                'headers' => ['Accept' => 'text/plain'],
+                'body' => $file->get_content_file_handle(),
+            ]);
+        } catch (\Exception $e) {
+            if (method_exists($e, 'getReasonPhrase')) {
+                $debuginfo = $e->getReasonPhrase();
+            } else {
+                $debuginfo = $e->getMessage();
+            }
+            throw new extraction_exception('error:server:httprequest', 'metadataextractor_tika', '', null, $debuginfo);
+        }
+
+        $result = $this->extract_response_content($response);
+
+        return $result;
+    }
+
 
     /**
      * Extract metadata string from content of response.
@@ -204,7 +229,7 @@ class server {
      *
      * @return string|false json string of metadata or false if failed.
      */
-    private function extract_response_metadata(\GuzzleHttp\Psr7\Response $response) {
+    private function extract_response_content(\GuzzleHttp\Psr7\Response $response) {
 
         if ($response->getStatusCode() == 200) {
             $result = $response->getBody()->getContents();
