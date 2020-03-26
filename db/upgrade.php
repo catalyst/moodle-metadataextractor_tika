@@ -134,6 +134,29 @@ function xmldb_metadataextractor_tika_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2020031302, 'metadataextractor', 'tika');
     }
 
+    if ($oldversion < 2020032301) {
+
+        // Define field resourcecreated to be added to metadataextractor_tika.
+        $table = new xmldb_table('metadataextractor_tika');
+        $field = new xmldb_field('resourcecreated', XMLDB_TYPE_CHAR, '100', null, null, null, null, 'date');
+
+        // Conditionally launch add field resourcecreated.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field resourcemodifed to be added to metadataextractor_tika.
+        $table = new xmldb_table('metadataextractor_tika');
+        $field = new xmldb_field('resourcemodifed', XMLDB_TYPE_CHAR, '100', null, null, null, null, 'resourcecreated');
+
+        // Conditionally launch add field resourcemodifed.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Tika savepoint reached.
+        upgrade_plugin_savepoint(true, 2020032301, 'metadataextractor', 'tika');
+    }
 
     return true;
 }
