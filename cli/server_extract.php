@@ -107,14 +107,20 @@ if (!empty($options['port'])) {
 
 if (!empty($options['connection'])) {
     $server = new \metadataextractor_tika\server();
-    $response = $server->test_connection();
-    $statuscode = $response->getStatusCode();
 
-    if ($statuscode == 200) {
-        mtrace('Connection successful - HTTP Status: ' . $statuscode);
-        exit(0);
-    } else {
-        mtrace('Connection failed - HTTP Status: ' . $statuscode);
+    try {
+        $response = $server->test_connection();
+        $statuscode = $response->getStatusCode();
+
+        if ($statuscode == 200) {
+            mtrace('Connection successful - HTTP Status: ' . $statuscode);
+            exit(0);
+        } else {
+            mtrace('Connection failed - HTTP Status: ' . $statuscode);
+            exit(1);
+        }
+    } catch (moodle_exception $exception) {
+        mtrace('Connection failed - No HTTP status code returned');
         exit(1);
     }
 }
