@@ -48,6 +48,7 @@ $string['error:invalidservicetype'] = 'Invalid Tika service type set.';
 $string['error:local:config'] = 'Local Tika application not installed or incorrectly configured.';
 $string['error:missingdependency'] = 'Missing Tika metadataextractor dependency: {$a}.';
 $string['error:nometadata'] = 'Tika processing returned no metadata for resource.';
+$string['error:resource:contentdoesnotexist'] = 'Content could not be found for {$a->type} ID: {$a->id}.';
 $string['error:server'] = 'Tika server responded with an error.';
 $string['error:server:ftpnotsupported'] = 'Metadata extraction from FTP urls is not supported.';
 $string['error:server:nohostset'] = 'No Tika server hostname or IP address set.';

@@ -35,6 +35,7 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->dirroot . '/local/aws/sdk/aws-autoloader.php');
 require_once($CFG->dirroot . '/mod/url/locallib.php');
+require_once($CFG->dirroot . '/admin/tool/metadata/constants.php');
 
 /**
  * Class for making API requests to a Tika server.
@@ -138,11 +139,18 @@ class server {
      * @param \stored_file $file the file to extract metadata for.
      *
      * @return string|false $result json encoded metadata or false if metadata could not be extracted.
-     * @throws \tool_metadata\extraction_exception
+     * @throws \tool_metadata\extraction_exception if file does not exist or http request failed.
      */
     public function get_file_metadata(stored_file $file) {
 
-        $body = \GuzzleHttp\Psr7\stream_for($file->get_content_file_handle());
+        $resource = $file->get_content_file_handle();
+
+        if (empty($resource)) {
+            throw new extraction_exception('error:resource:contentdoesnotexist', 'metadataextractor_tika', '',
+                ['id' => $file->get_id(), 'type' => TOOL_METADATA_RESOURCE_TYPE_FILE]);
+        }
+
+        $body = \GuzzleHttp\Psr7\stream_for($resource);
 
         try {
             $response = $this->client->request('PUT', "$this->baseuri/meta", [
@@ -209,6 +217,13 @@ class server {
      * @throws \tool_metadata\extraction_exception
      */
     public function get_file_content(stored_file $file) {
+
+        $resource = $file->get_content_file_handle();
+
+        if (empty($resource)) {
+            throw new extraction_exception('error:resource:contentdoesnotexist', 'metadataextractor_tika', '',
+                ['id' => $file->get_id(), 'type' => TOOL_METADATA_RESOURCE_TYPE_FILE]);
+        }
 
         try {
             $response = $this->client->request('PUT', "$this->baseuri/tika", [

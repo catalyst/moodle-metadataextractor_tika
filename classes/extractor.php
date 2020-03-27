@@ -166,6 +166,12 @@ class extractor extends \tool_metadata\extractor {
         // `get_local_path_from_storedfile($file, true)` is public and can be utilised to obtain local
         // path.
         $resource = $file->get_content_file_handle();
+
+        if (empty($resource)) {
+            throw new extraction_exception('error:resource:contentdoesnotexist', 'metadataextractor_tika', '',
+                ['id' => $file->get_id(), 'type' => TOOL_METADATA_RESOURCE_TYPE_FILE]);
+        }
+
         $localpath = stream_get_meta_data($resource)['uri'];
         $tikapath = get_config('metadataextractor_tika', 'tikalocalpath');
 
