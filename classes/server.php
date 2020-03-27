@@ -101,21 +101,32 @@ class server {
     }
 
     /**
-     * Test that server is ready to perform requests.
+     * Test the connection to Tika server and get a response.
      *
-     * @throws \tool_metadata\extraction_exception
+     * @return \Psr\Http\Message\ResponseInterface $response HTTP request response.
+     * @throws \tool_metadata\extraction_exception on connection error.
+     */
+    public function test_connection() {
+        // This tika server api call should return HELLO message.
+        try {
+            $response = $this->client->request('GET', "$this->baseuri/tika");
+        } catch (GuzzleException $ex) {
+            throw new extraction_exception('error:connectionerror', 'metadataextractor_tika');
+        }
+
+        return $response;
+    }
+
+    /**
+     * Test that server is ready to perform requests.
      */
     public function is_ready() {
         $result = false;
 
-        try {
-            // This tika server api call should return HELLO message.
-            $response = $this->client->request('GET', "$this->baseuri/tika");
-            if ($response->getStatusCode() == 200) {
-                $result = true;
-            }
-        } catch (GuzzleException $ex) {
-            throw new extraction_exception('error:connectionerror', 'metadataextractor_tika');
+        $response = $this->test_connection();
+
+        if ($response->getStatusCode() == 200) {
+            $result = true;
         }
 
         return $result;

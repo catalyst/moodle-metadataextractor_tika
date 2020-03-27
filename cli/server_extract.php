@@ -37,13 +37,15 @@ list($options, $unrecognized) = cli_get_params(
         'showdebugging' => false,
         'json' => false,
         'metadata' => false,
-        'text' => false
+        'text' => false,
+        'connection' => false
     ], [
         'f' => 'fileid',
         'h' => 'help',
         'j' => 'json',
         'm' => 'metadata',
-        't' => 'text'
+        't' => 'text',
+        'c' => 'connection'
     ]
 );
 
@@ -58,7 +60,9 @@ if ($options['help']) {
 Extract json metadata from a file using a remote tika server using RESTful API.
 
 Required:
--f --fileid              The file id of the Moodle instance file to extract metadata for
+-f --fileid              The file id of the Moodle instance file to extract metadata for OR
+-c --connection          Test the server connection - returns success or failure message and HTTP response code
+
 -j --json                Print metadata as a raw json string OR
 -m --metadata            Print metadata as a vardump OR
 -t --text                Print Tika extracted text content of file
@@ -99,6 +103,20 @@ if (!empty($options['port'])) {
 } elseif (empty($port)) {
     mtrace('No port value set for tika server, pass in port number or set port number in plugin settings.');
     exit(1);
+}
+
+if (!empty($options['connection'])) {
+    $server = new \metadataextractor_tika\server();
+    $response = $server->test_connection();
+    $statuscode = $response->getStatusCode();
+
+    if ($statuscode == 200) {
+        mtrace('Connection successful - HTTP Status: ' . $statuscode);
+        exit(0);
+    } else {
+        mtrace('Connection failed - HTTP Status: ' . $statuscode);
+        exit(1);
+    }
 }
 
 if (empty($options['fileid'])) {
