@@ -24,6 +24,7 @@
 
 namespace metadataextractor_tika;
 
+use Psr\Http\Message\StreamInterface;
 use stored_file;
 use tool_metadata\extraction_exception;
 use tool_metadata\helper;
@@ -64,12 +65,205 @@ class extractor extends \tool_metadata\extractor {
     const SERVICETYPE_SERVER = 'server';
 
     /**
+     * Tika extraction option for extracting text content.
+     */
+    const EXTRACTION_OPTION_TEXT_CONTENT = '--text';
+
+    /**
+     * Tika extraction option for extracting metadata in JSON format.
+     */
+    const EXTRACTION_OPTION_JSON_METADATA = '--json';
+
+    /**
+     * Tika extraction option for detecting mimetype.
+     */
+    const EXTRACTION_OPTION_DETECT_TYPE = '--detect';
+
+    /**
+     * Supported extraction options for Tika parsing.
+     */
+    const SUPPORTED_EXTRACTION_OPTIONS = [
+        self::EXTRACTION_OPTION_JSON_METADATA,
+        self::EXTRACTION_OPTION_TEXT_CONTENT,
+        self::EXTRACTION_OPTION_DETECT_TYPE,
+    ];
+
+    /**
      * Get the configured servicetype from plugin config.
      *
      * @return string|false the set value or false if not set.
      */
     public function get_servicetype_set() {
         return get_config('metadataextractor_tika', 'tikaservicetype');
+    }
+
+    /**
+     * Extract metadata from resource using Tika.
+     *
+     * @param object $resource the resource instance to parse.
+     * @param string $type the type of the resource to parse.
+     * @param array|string the option/options to apply to Tika extraction, taken from SUPPORTED_EXTRACTION_OPTIONS,
+     * determines what types of metadata will be parsed from resource.
+     *
+     * @throws \tool_metadata\extraction_exception if invalid service type, invalid options, or unsupported resource.
+     */
+    protected function extract($resource, string $type, $options = []) {
+        // Convert single option to array of options.
+        if (!is_array($options)) {
+            $options = [$options];
+        }
+
+        $servicetype = $this->get_servicetype_set();
+        $stream = helper::get_resource_stream($resource, $type);
+
+        if (empty($stream)) {
+            throw new extraction_exception('status:extractionnotsupported', 'tool_metadata', '',
+                [
+                    'resourceid' => helper::get_resource_id($resource, $type),
+                    'type' => $type,
+                    'plugin' => self::METADATAEXTRACTOR_NAME
+                ]);
+        }
+
+        switch($servicetype) {
+            case self::SERVICETYPE_LOCAL :
+                $result = $this->extract_local($stream, $options);
+                break;
+            case self::SERVICETYPE_SERVER :
+                if (count($options) != 1) {
+                    throw new extraction_exception('error:server:invalidoptions', 'metadataextractor_tika');
+                }
+                $result = $this->extract_server($stream, reset($options));
+                break;
+            default :
+                throw new extraction_exception('error:invalidservicetype', 'metadataextractor_tika');
+                break;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Parse metadata from a resource using locally installed tika-app.
+     *
+     * @param \Psr\Http\Message\StreamInterface $stream the stream to extract metadata for.
+     * @param array|string the option/options to apply to local extraction, taken from SUPPORTED_EXTRACTION_OPTIONS,
+     * determines what types of data will be parsed from resource.
+     *
+     * @return string|null data results of Tika parsing resource.
+     * @throws \tool_metadata\extraction_exception
+     */
+    protected function extract_local(StreamInterface $stream, $options = []) {
+        return $this->execute_tika_command($options, $stream);
+    }
+
+    /**
+     * Use Tika Server to parse metadata from a resource.
+     *
+     * @param \Psr\Http\Message\StreamInterface $stream the stream to extract metadata for.
+     * @param string $option the option to apply to Tika server extraction, taken from SUPPORTED_EXTRACTION_OPTIONS,
+     * determines what data will be parsed from resource.
+     *
+     * @return string|null data results of Tika parsing resource.
+     * @throws \tool_metadata\extraction_exception
+     */
+    protected function extract_server(StreamInterface $stream, $option) {
+        $result = null;
+        $server = new server();
+
+        if (!$server->is_ready()) {
+            throw new extraction_exception('error:server:notready', 'metadataextractor_tika');
+        }
+
+        switch ($option) {
+            case (self::EXTRACTION_OPTION_TEXT_CONTENT) :
+                $result = $server->get_content($stream);
+                break;
+            case (self::EXTRACTION_OPTION_JSON_METADATA) :
+                $result = $server->get_metadata($stream);
+                break;
+            case (self::EXTRACTION_OPTION_DETECT_TYPE) :
+                $result = $server->get_mimetype($stream);
+                break;
+            default :
+                throw new extraction_exception('error:server:optionnotsupported', 'metadataextractor_tika');
+                break;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get Tika extracted content for a resource.
+     *
+     * @param object $resource the resource instance to get mimetype of content for.
+     * @param string $type the type of the resource to extract mimetype for.
+     *
+     * @return string|null $content string content of resource, null if resource could not be parsed.
+     * @throws \tool_metadata\extraction_exception if service type not configured correctly.
+     */
+    protected function extract_content($resource, string $type) {
+        return $this->extract($resource, $type, self::EXTRACTION_OPTION_TEXT_CONTENT);
+    }
+
+    /**
+     * Extract content from a file resource.
+     *
+     * @param \stored_file $file the file to extract content for.
+     *
+     * @return string|null $content text content or null if no content to extract.
+     */
+    public function extract_file_content(stored_file $file) {
+        return $this->extract_content($file, TOOL_METADATA_RESOURCE_TYPE_FILE);
+    }
+
+    /**
+     * Extract content for a URL resource.
+     *
+     * @param object $url the URL resource to extract content for.
+     *
+     * @return string|null $content text content or null if no content to extract.
+     */
+    public function extract_url_content($url) {
+        return $this->extract_content($url, TOOL_METADATA_RESOURCE_TYPE_URL);
+    }
+
+    /**
+     * Extract the mimetype of a resource's content.
+     *
+     * @param object $resource the resource instance to get mimetype of content for.
+     * @param string $type the type of the resource to extract mimetype for.
+     *
+     * @return string|null IANA mimetype, possibly with optional parameter, 'type/subtype;parameter=value', null if could not be
+     * determined.
+     * @throws \tool_metadata\extraction_exception if service type not configured correctly.
+     */
+    protected function extract_mimetype($resource, string $type) {
+        return $this->extract($resource, $type, self::EXTRACTION_OPTION_DETECT_TYPE);
+    }
+
+    /**
+     * Extract the mimetype of a file's content.
+     *
+     * @param \stored_file $file the file instance to extract mimetype for.
+     *
+     * @return string|null IANA mimetype, possibly with optional parameter, 'type/subtype;parameter=value', null if could not be
+     * determined.
+     */
+    public function extract_file_mimetype(stored_file $file) {
+        return $this->extract_mimetype($file, TOOL_METADATA_RESOURCE_TYPE_FILE);
+    }
+
+    /**
+     * Extract the mimetype of a url's content.
+     *
+     * @param object $url the url resource to extract mimetype for.
+     *
+     * @return string|null IANA mimetype, possibly with optional parameter, 'type/subtype;parameter=value', null if could not be
+     * determined.
+     */
+    public function extract_url_mimetype($url) {
+        return $this->extract_mimetype($url, TOOL_METADATA_RESOURCE_TYPE_URL);
     }
 
     /**
@@ -84,19 +278,8 @@ class extractor extends \tool_metadata\extractor {
 
         $result = null;
 
-        if (!empty($servicetype = $this->get_servicetype_set())) {
-            switch ($servicetype) {
-                case self::SERVICETYPE_LOCAL :
-                    $rawmetadata = $this->extract_file_metadata_local($file);
-                    break;
-                case self::SERVICETYPE_SERVER :
-                    $rawmetadata = $this->extract_file_metadata_server($file);
-                    break;
-                default :
-                    throw new extraction_exception('error:invalidservicetype');
-                    break;
-            }
-        }
+        $rawmetadata = $this->extract($file, TOOL_METADATA_RESOURCE_TYPE_FILE, self::EXTRACTION_OPTION_JSON_METADATA);
+
         if (!empty($rawmetadata)) {
             // Use associative array as some key names may not parse well
             // into php stdClass (eg. 'Content-Type').
@@ -124,19 +307,8 @@ class extractor extends \tool_metadata\extractor {
 
         $result = null;
 
-        if (!empty($servicetype = $this->get_servicetype_set())) {
-            switch ($servicetype) {
-                case self::SERVICETYPE_LOCAL :
-                    $rawmetadata = $this->extract_url_metadata_local($url);
-                    break;
-                case self::SERVICETYPE_SERVER :
-                    $rawmetadata = $this->extract_url_metadata_server($url);
-                    break;
-                default :
-                    throw new extraction_exception('error:invalidservicetype');
-                    break;
-            }
-        }
+        $rawmetadata = $this->extract($url, TOOL_METADATA_RESOURCE_TYPE_URL, self::EXTRACTION_OPTION_JSON_METADATA);
+
         if (!empty($rawmetadata)) {
             // Use associative array as some key names may not parse well
             // into php stdClass (eg. 'Content-Type').
@@ -170,112 +342,6 @@ class extractor extends \tool_metadata\extractor {
         $metadataclass = tika_helper::get_metadata_class($mimetype);
 
         return new $metadataclass(0, $resourcehash);
-    }
-
-    /**
-     * Create file metadata using the locally installed tika-app.
-     *
-     * @param \stored_file $file
-     *
-     * @return string|null $result json encoded metadata or null if no metadata.
-     * @throws \tool_metadata\extraction_exception
-     */
-    protected function extract_file_metadata_local(stored_file $file) {
-
-        $fs = get_file_storage();
-        $filesystem = $fs->get_file_system();
-        $filepath = $filesystem->get_local_path_from_storedfile($file);
-
-        $resource = $file->get_content_file_handle();
-
-        if (empty($resource)) {
-            throw new extraction_exception('error:resource:contentdoesnotexist', 'metadataextractor_tika', '',
-                ['id' => $file->get_id(), 'type' => TOOL_METADATA_RESOURCE_TYPE_FILE]);
-        }
-
-        $tikapath = get_config('metadataextractor_tika', 'tikalocalpath');
-
-        if (!$this->is_local_tika_ready()) {
-            throw new extraction_exception('error:local:config', 'metadataextractor_tika');
-        } else {
-            $cmd = 'java -jar ' . $tikapath . ' -j ' . $filepath;
-            $result = shell_exec($cmd);
-        }
-
-        return $result;
-    }
-
-    /**
-     * Extract file metadata using a tika server.
-     *
-     * @param \stored_file $file
-     *
-     * @return string|null $result json encoded metadata or null if no metadata.
-     * @throws \tool_metadata\extraction_exception
-     */
-    protected function extract_file_metadata_server(stored_file $file) {
-        $server = new server();
-        if (!$server->is_ready()) {
-            throw new extraction_exception('error:server:notready', 'metadataextractor_tika');
-        } else {
-            $result = $server->get_file_metadata($file);
-        }
-
-        return $result;
-    }
-
-    /**
-     * Create url metadata using the locally installed tika-app.
-     *
-     * @param object $url mod_url instance.
-     *
-     * @return string|null $result json encoded metadata or null if no metadata.
-     * @throws \tool_metadata\extraction_exception
-     */
-    protected function extract_url_metadata_local($url) {
-        $cm = get_coursemodule_from_instance('url', $url->id, $url->course, false, MUST_EXIST);
-        $fullurl = url_get_full_url($url, $cm, $url->course);
-
-        // Create a temp file and add url contents to it for tika parsing.
-        $file = tmpfile();
-        fwrite($file, file_get_contents($fullurl));
-        $filepath = stream_get_meta_data($file)['uri'];
-
-        if (!$this->is_local_tika_ready()) {
-            throw new extraction_exception('error:local:config', 'metadataextractor_tika');
-        } else {
-            $tikapath = get_config('metadataextractor_tika', 'tikalocalpath');
-            $cmd = 'java -jar ' . $tikapath . ' -j ' . $filepath;
-            $rawmetadata = shell_exec($cmd);
-            fclose($file);
-        }
-
-        if (!empty($rawmetadata)) {
-            $result = $rawmetadata;
-        } else {
-            $result = false;
-        }
-        return $result;
-    }
-
-    /**
-     * Extract url metadata using a tika server.
-     *
-     * @param object $url mod_url instance.
-     *
-     * @return string|null $result json encoded metadata or null if no metadata.
-     * @throws \tool_metadata\extraction_exception
-     */
-    protected function extract_url_metadata_server($url) {
-        $server = new server();
-
-        if (!$server->is_ready()) {
-            throw new extraction_exception('error:server:notready', 'metadataextractor_tika');
-        } else {
-            $result = $server->get_url_metadata($url);
-        }
-
-        return $result;
     }
 
     /**
@@ -359,6 +425,97 @@ class extractor extends \tool_metadata\extractor {
                 $result = true;
             } else {
                 $result = false;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Is this extractor ready to extract tika metadata?
+     *
+     * @return bool true if configured and ready, false otherwise.
+     */
+    public function is_ready() : bool {
+        $servicetype = $this->get_servicetype_set();
+
+        if (!empty($servicetype)) {
+            switch($servicetype) {
+                case self::SERVICETYPE_LOCAL :
+                    $result = $this->is_local_tika_ready();
+                    break;
+                case self::SERVICETYPE_SERVER :
+                    try {
+                        $server = new server();
+                        $result = $server->is_ready();
+                    } catch(\Exception $e) {
+                        $result = false;
+                    }
+                    break;
+                default :
+                    $result = false;
+                    break;
+            }
+        } else {
+            $result = false;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Check if a Tika CLI option is supported by this extractor.
+     *
+     * @param string $option the option to check.
+     *
+     * @return bool true if supported, false otherwise.
+     */
+    public function is_cli_option_supported(string $option) : bool {
+        $result = false;
+
+        if (in_array($option, self::SUPPORTED_EXTRACTION_OPTIONS)) {
+            $result = true;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Execute a Tika extraction command using local Tika install.
+     *
+     * @param array|string $options string[] of tika options to apply to CLI command, or a single string option,
+     * must be contained in SUPPORTED_EXTRACTION_OPTIONS.
+     * @param \GuzzleHttp\Psr7\Stream $stream the resource stream to run tika command on.
+     * @param bool true if stream resource to be closed following command execution.
+     *
+     * @return string|null $result the Tika parsed content.
+     * @throws \tool_metadata\extraction_exception if local Tika install is not ready, missing dependencies, or invalid option.
+     */
+    protected function execute_tika_command($options = [], $stream = null, $close = false) {
+        if (!$this->is_local_tika_ready()) {
+            throw new extraction_exception('error:local:config', 'metadataextractor_tika');
+        } else {
+            $tikapath = get_config('metadataextractor_tika', 'tikalocalpath');
+            $filepath = $stream->getMetadata('uri');
+
+            $optionstring = '';
+            foreach ($options as $option) {
+                if(!$this->is_cli_option_supported($option)) {
+                    throw new extraction_exception('error:local:clioptionnotsupported', 'metadataextractor_tika');
+                }
+                $optionstring .= $option . ' ';
+            }
+
+            if (empty($optionstring)) {
+                throw new extraction_exception('error:local:nooptionset', 'metadataextractor_tika');
+            }
+
+            $cmd = "java -jar $tikapath $optionstring $filepath";
+
+            $result = shell_exec($cmd);
+
+            if ($close) {
+                $stream->close();
             }
         }
 
