@@ -184,53 +184,6 @@ function xmldb_metadataextractor_tika_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2020032401, 'metadataextractor', 'tika');
     }
 
-    if ($oldversion < 2020032501) {
-
-        // Define table tika_audio_metadata to be created.
-        $table = new xmldb_table('tika_audio_metadata');
-
-        // Adding fields to table tika_audio_metadata.
-        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
-        $table->add_field('resourcehash', XMLDB_TYPE_CHAR, '40', null, XMLDB_NOTNULL, null, null);
-        $table->add_field('duration', XMLDB_TYPE_CHAR, '25', null, null, null, null);
-        $table->add_field('samplerate', XMLDB_TYPE_CHAR, '25', null, null, null, null);
-        $table->add_field('location', XMLDB_TYPE_CHAR, '255', null, null, null, null);
-
-        // Adding keys to table tika_audio_metadata.
-        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
-        $table->add_key('resourcehash', XMLDB_KEY_UNIQUE, ['resourcehash']);
-
-        // Conditionally launch create table for tika_audio_metadata.
-        if (!$dbman->table_exists($table)) {
-            $dbman->create_table($table);
-        }
-
-        // Define table tika_video_metadata to be created.
-        $table = new xmldb_table('tika_video_metadata');
-
-        // Adding fields to table tika_video_metadata.
-        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
-        $table->add_field('resourcehash', XMLDB_TYPE_CHAR, '40', null, XMLDB_NOTNULL, null, null);
-        $table->add_field('height', XMLDB_TYPE_CHAR, '15', null, null, null, null);
-        $table->add_field('width', XMLDB_TYPE_CHAR, '15', null, null, null, null);
-        $table->add_field('duration', XMLDB_TYPE_CHAR, '25', null, null, null, null);
-        $table->add_field('samplerate', XMLDB_TYPE_CHAR, '25', null, null, null, null);
-        $table->add_field('framesize', XMLDB_TYPE_CHAR, '100', null, null, null, null);
-        $table->add_field('location', XMLDB_TYPE_CHAR, '255', null, null, null, null);
-
-        // Adding keys to table tika_video_metadata.
-        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
-        $table->add_key('resourcehash', XMLDB_KEY_UNIQUE, ['resourcehash']);
-
-        // Conditionally launch create table for tika_video_metadata.
-        if (!$dbman->table_exists($table)) {
-            $dbman->create_table($table);
-        }
-
-        // Tika savepoint reached.
-        upgrade_plugin_savepoint(true, 2020032501, 'metadataextractor', 'tika');
-    }
-
     if ($oldversion < 2020032502) {
 
         // Define table tika_spreadsheet_metadata to be created.
@@ -313,6 +266,53 @@ function xmldb_metadataextractor_tika_upgrade($oldversion) {
 
         // Tika savepoint reached.
         upgrade_plugin_savepoint(true, 2020032603, 'metadataextractor', 'tika');
+    }
+
+    if ($oldversion < 2020033001) {
+
+        // Define table tika_audio_metadata to be created.
+        $table = new xmldb_table('tika_audio_metadata');
+
+        // Adding fields to table tika_audio_metadata.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('resourcehash', XMLDB_TYPE_CHAR, '40', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('duration', XMLDB_TYPE_CHAR, '25', null, null, null, null);
+        $table->add_field('samplerate', XMLDB_TYPE_CHAR, '25', null, null, null, null);
+        $table->add_field('location', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+
+        // Adding keys to table tika_audio_metadata.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('resourcehash', XMLDB_KEY_UNIQUE, ['resourcehash']);
+
+        // Conditionally launch create table for tika_audio_metadata.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define table tika_video_metadata to be created.
+        $table = new xmldb_table('tika_video_metadata');
+
+        // Adding fields to table tika_video_metadata.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('resourcehash', XMLDB_TYPE_CHAR, '40', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('height', XMLDB_TYPE_CHAR, '15', null, null, null, null);
+        $table->add_field('width', XMLDB_TYPE_CHAR, '15', null, null, null, null);
+        $table->add_field('duration', XMLDB_TYPE_CHAR, '25', null, null, null, null);
+        $table->add_field('samplerate', XMLDB_TYPE_CHAR, '25', null, null, null, null);
+        $table->add_field('framesize', XMLDB_TYPE_CHAR, '100', null, null, null, null);
+        $table->add_field('location', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+
+        // Adding keys to table tika_video_metadata.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('resourcehash', XMLDB_KEY_UNIQUE, ['resourcehash']);
+
+        // Conditionally launch create table for tika_video_metadata.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Tika savepoint reached.
+        upgrade_plugin_savepoint(true, 2020033001, 'metadataextractor', 'tika');
     }
 
     return true;
