@@ -121,6 +121,10 @@ if (!empty($options['connection'])) {
         }
     } catch (moodle_exception $exception) {
         mtrace('Connection failed - No HTTP status code returned');
+        mtrace($exception->getMessage());
+        if (debugging('', DEBUG_DEVELOPER)) {
+            mtrace(format_backtrace($exception->getTrace(), true));
+        }
         exit(1);
     }
 }
