@@ -55,7 +55,7 @@ class metadata_image extends \metadataextractor_tika\metadata {
      */
     public $location;
 
-    const SUPPLEMENTARY_TABLE = 'tika_video_metadata';
+    const SUPPLEMENTARY_TABLE = 'tika_image_metadata';
 
     protected function supplementary_key_map() {
         return [
