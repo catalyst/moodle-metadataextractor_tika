@@ -35,6 +35,65 @@ defined('MOODLE_INTERNAL') || die();
  */
 class metadata_presentation extends \metadataextractor_tika\metadata {
 
+    /**
+     * int count of slides in presentation.
+     */
+    public $slidecount;
+
+    /**
+     * @var int the paragraph count of presentation.
+     */
+    public $paragraphcount;
+
+    /**
+     * @var int the word count of presentation.
+     */
+    public $wordcount;
+
+    /**
+     * @var string the name of the last author to edit presentation.
+     */
+    public $lastauthor;
+
+    /**
+     * @var string the application used to produce presentation.
+     */
+    public $application;
+
+    /**
+     * @var mixed the version of the application used to produce presentation.
+     */
+    public $appversion;
+
+    /**
+     * @var mixed the time spent editing the presentation.
+     */
+    public $edittime;
+
+    /**
+     * @var int the revision number of presentation.
+     */
+    public $revisionnumber;
+
+    /**
+     * @var int count of how many notes on presentation.
+     */
+    public $notecount;
+
+    /**
+     * @var string presentation format, (On-screen Show (4:3), Widescreen etc.)
+     */
+    public $format;
+
+    /**
+     * @var string the name of presentation manager.
+     */
+    public $manager;
+
+    /**
+     * @var string the name of company presentation belongs to or was authored by.
+     */
+    public $company;
 
     const SUPPLEMENTARY_TABLE = 'tika_presentation_metadata';
 
@@ -49,7 +108,7 @@ class metadata_presentation extends \metadataextractor_tika\metadata {
             'lastauthor' => ['Last-Author', 'meta:last-author'],
             'application' => ['Application-Name', 'extended-properties:Application', 'generator'],
             'appversion' => ['Application-Version', 'extended-properties:AppVersion'],
-            'edittime' => ['Total-Time', 'extended-properties:TotalTime', 'Edit-Time'],
+            'edittime' => ['Edit-Time', 'extended-properties:EditTime'],
             'revisionnumber' => ['Revision-Number', 'cp:revision', 'editing-cycles'],
             'notecount' => ['Notes', 'extended-properties:Notes'],
             'format' => ['Presentation-Format', 'extended-properties:PresentationFormat'],
