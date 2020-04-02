@@ -185,6 +185,14 @@ class extractor extends \tool_metadata\extractor {
         $fs = get_file_storage();
         $filesystem = $fs->get_file_system();
         $filepath = $filesystem->get_local_path_from_storedfile($file);
+
+        $resource = $file->get_content_file_handle();
+
+        if (empty($resource)) {
+            throw new extraction_exception('error:resource:contentdoesnotexist', 'metadataextractor_tika', '',
+                ['id' => $file->get_id(), 'type' => TOOL_METADATA_RESOURCE_TYPE_FILE]);
+        }
+
         $tikapath = get_config('metadataextractor_tika', 'tikalocalpath');
 
         if (!$this->is_local_tika_ready()) {
