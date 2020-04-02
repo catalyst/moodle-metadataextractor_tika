@@ -52,6 +52,6 @@ $string['error:resource:contentdoesnotexist'] = 'Content could not be found for 
 $string['error:server'] = 'Tika server responded with an error.';
 $string['error:server:ftpnotsupported'] = 'Metadata extraction from FTP urls is not supported.';
 $string['error:server:nohostset'] = 'No Tika server hostname or IP address set.';
-$string['error:server:httprequest'] = 'Error attempting to make HTTP request.';
+$string['error:server:httprequest'] = 'Error attempting to make HTTP request, status code: {$a->status}, reason: {$a->reason}.';
 $string['error:server:notready'] = 'Tika server is not ready to process HTTP requests.';
 $string['error:tikapathnotset'] = 'Path to Tika application jar not set.';

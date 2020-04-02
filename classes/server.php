@@ -24,9 +24,7 @@
 
 namespace metadataextractor_tika;
 
-use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Psr7\Response;
 use stored_file;
 use tool_metadata\extraction_exception;
 
@@ -123,12 +121,32 @@ class server {
     }
 
     /**
+     * Handle an HTTP request exception thrown when attempting to extract metadata using Tika Server.
+     *
+     * @param \Exception $exception the exception caught when attempting to make HTTP request.
+     *
+     * @throws \tool_metadata\extraction_exception informative exception to assist in troubleshooting
+     * Tika Server issues.
+     */
+    protected function handle_extraction_request_exception(\Exception $exception) {
+        if (method_exists($exception, 'getResponse')) {
+            $response = $exception->getResponse();
+        } else {
+            $response = null;
+        }
+        $status = !empty($response) ? $response->getStatusCode() : 500;
+        $reason = !empty($response) ? $response->getReasonPhrase() : 'Internal Server Error';
+
+        throw new extraction_exception('error:server:httprequest', 'metadataextractor_tika', '',
+            ['status' => $status, 'reason' => $reason], $exception->getMessage());
+    }
+
+    /**
      * Get json encoded file metadata from Tika server.
      *
      * @param \stored_file $file the file to extract metadata for.
      *
      * @return string|false $result json encoded metadata or false if metadata could not be extracted.
-     * @throws \tool_metadata\extraction_exception if file does not exist or http request failed.
      */
     public function get_file_metadata(stored_file $file) {
 
@@ -144,13 +162,8 @@ class server {
                 'headers' => ['Accept' => 'application/json'],
                 'body' => $resource
             ]);
-        } catch (\Exception $e) {
-            if (method_exists($e, 'getReasonPhrase')) {
-                $debuginfo = $e->getReasonPhrase();
-            } else {
-                $debuginfo = $e->getMessage();
-            }
-            throw new extraction_exception('error:server:httprequest', 'metadataextractor_tika', '', null, $debuginfo);
+        } catch (\Exception $exception) {
+            $this->handle_extraction_request_exception($exception);
         }
 
         $result = $this->extract_response_content($response);
@@ -161,10 +174,9 @@ class server {
     /**
      * Get json encoded url metadata from Tika server.
      *
-     * @param $url object mod_url instance.
+     * @param object $url mod_url instance.
      *
-     * @return object result object containing {'metadata' => string, 'contenthash' => string, 'success' => bool}
-     * @throws \tool_metadata\extraction_exception
+     * @return string|false $result json encoded metadata or false if metadata could not be extracted.
      */
     public function get_url_metadata($url) {
 
@@ -181,13 +193,8 @@ class server {
                 'headers' => ['Accept' => 'application/json'],
                 'body' => $stream,
             ]);
-        } catch (\Exception $e) {
-            if (method_exists($e, 'getReasonPhrase')) {
-                $debuginfo = $e->getReasonPhrase();
-            } else {
-                $debuginfo = $e->getMessage();
-            }
-            throw new extraction_exception('error:server:httprequest', 'metadataextractor_tika', '', null, $debuginfo);
+        } catch (\Exception $exception) {
+            $this->handle_extraction_request_exception($exception);
         }
 
         $result = $this->extract_response_content($tikaresponse);
@@ -201,7 +208,6 @@ class server {
      * @param \stored_file $file the file to extract content for.
      *
      * @return string|false $result content or false if content could not be extracted.
-     * @throws \tool_metadata\extraction_exception
      */
     public function get_file_content(stored_file $file) {
 
@@ -217,13 +223,8 @@ class server {
                 'headers' => ['Accept' => 'text/plain'],
                 'body' => $resource,
             ]);
-        } catch (\Exception $e) {
-            if (method_exists($e, 'getReasonPhrase')) {
-                $debuginfo = $e->getReasonPhrase();
-            } else {
-                $debuginfo = $e->getMessage();
-            }
-            throw new extraction_exception('error:server:httprequest', 'metadataextractor_tika', '', null, $debuginfo);
+        } catch (\Exception $exception) {
+            $this->handle_extraction_request_exception($exception);
         }
 
         $result = $this->extract_response_content($response);
@@ -237,7 +238,8 @@ class server {
      *
      * @param \GuzzleHttp\Psr7\Response $response
      *
-     * @return string|false json string of metadata or false if failed.
+     * @return string|false string of metadata or false if failed.
+     * @throws \tool_metadata\extraction_exception if extraction was not successful.
      */
     private function extract_response_content(\GuzzleHttp\Psr7\Response $response) {
 
