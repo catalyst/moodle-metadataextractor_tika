@@ -150,12 +150,10 @@ class server {
                 ['id' => $file->get_id(), 'type' => TOOL_METADATA_RESOURCE_TYPE_FILE]);
         }
 
-        $body = \GuzzleHttp\Psr7\stream_for($resource);
-
         try {
             $response = $this->client->request('PUT', "$this->baseuri/meta", [
                 'headers' => ['Accept' => 'application/json'],
-                'body' => $body,
+                'body' => $resource
             ]);
         } catch (\Exception $e) {
             if (method_exists($e, 'getReasonPhrase')) {
@@ -228,7 +226,7 @@ class server {
         try {
             $response = $this->client->request('PUT', "$this->baseuri/tika", [
                 'headers' => ['Accept' => 'text/plain'],
-                'body' => $file->get_content_file_handle(),
+                'body' => $resource,
             ]);
         } catch (\Exception $e) {
             if (method_exists($e, 'getReasonPhrase')) {
@@ -243,7 +241,6 @@ class server {
 
         return $result;
     }
-
 
     /**
      * Extract metadata string from content of response.

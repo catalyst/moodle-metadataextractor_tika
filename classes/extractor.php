@@ -153,6 +153,26 @@ class extractor extends \tool_metadata\extractor {
     }
 
     /**
+     * Read metadata for a resource.
+     *
+     * Override parent class method to ensure correct metadata class is returned.
+     *
+     * @param string $resourcehash the unique hash of resource content or resource content id.
+     *
+     * @return \tool_metadata\metadata|null metadata instance or null if no metadata found.
+     * @throws \tool_metadata\extraction_exception
+     */
+    public function get_metadata(string $resourcehash) {
+        global $DB;
+
+        $mimetype = $DB->get_field($this->get_base_table(), 'format', ['resourcehash' => $resourcehash]);
+
+        $metadataclass = tika_helper::get_metadata_class($mimetype);
+
+        return new $metadataclass(0, $resourcehash);
+    }
+
+    /**
      * Create file metadata using the locally installed tika-app.
      *
      * @param \stored_file $file

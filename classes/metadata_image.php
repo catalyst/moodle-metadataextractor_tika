@@ -36,12 +36,12 @@ defined('MOODLE_INTERNAL') || die();
 class metadata_image extends \metadataextractor_tika\metadata {
 
     /**
-     * @var string the vertical height of the image, may include unit of measure (eg. pixels).
+     * @var mixed the vertical height of the image, may include unit of measure (eg. pixels).
      */
     public $height;
 
     /**
-     * @var string the horizontal width of the image, may include unit of measure (eg. pixels).
+     * @var mixed the horizontal width of the image, may include unit of measure (eg. pixels).
      */
     public $width;
 
