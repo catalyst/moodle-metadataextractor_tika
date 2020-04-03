@@ -104,7 +104,7 @@ class extractor extends \tool_metadata\extractor {
         }
 
         if (!empty($metadataarray) && is_array($metadataarray)) {
-            $mimetype = tika_helper::get_raw_metadata_mimetype($metadataarray);
+            $mimetype = $file->get_mimetype();
             $class = tika_helper::get_metadata_class($mimetype);
             $result = new $class(0, helper::get_resourcehash($file, TOOL_METADATA_RESOURCE_TYPE_FILE), $metadataarray);
         }
