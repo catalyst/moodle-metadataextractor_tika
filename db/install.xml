@@ -20,7 +20,7 @@
         <FIELD NAME="language" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Language of the resource."/>
         <FIELD NAME="date" TYPE="char" LENGTH="100" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The date/time when the resource was created."/>
         <FIELD NAME="resourcecreated" TYPE="char" LENGTH="100" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The date/time that resource was created"/>
-        <FIELD NAME="resourcemodifed" TYPE="char" LENGTH="100" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The date/time resource was modified"/>
+        <FIELD NAME="resourcemodified" TYPE="char" LENGTH="100" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The date/time resource was modified"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The date/time that metadata was created"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The date/time metadata was updated"/>
       </FIELDS>
