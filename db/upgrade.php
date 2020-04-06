@@ -299,8 +299,10 @@ function xmldb_metadataextractor_tika_upgrade($oldversion) {
         $table = new xmldb_table('metadataextractor_tika');
         $field = new xmldb_field('resourcemodifed', XMLDB_TYPE_CHAR, '100', null, null, null, '0', 'resourcecreated');
 
-        // Launch rename field resourcemodifed.
-        $dbman->rename_field($table, $field, 'resourcemodified');
+        // Conditionally launch rename field resourcemodifed.
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->rename_field($table, $field, 'resourcemodified');
+        }
 
         // Tika savepoint reached.
         upgrade_plugin_savepoint(true, 2020040601, 'metadataextractor', 'tika');
