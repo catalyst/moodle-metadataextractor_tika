@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * The main api for handling file metadata.
+ * Admin settings for metadataextractor_tika.
  *
  * @package    metadataextractor_tika
  * @copyright  2019 Tom Dickman <tomdickman@catalyst-au.net>
