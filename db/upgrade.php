@@ -293,5 +293,20 @@ function xmldb_metadataextractor_tika_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2020032601, 'metadataextractor', 'tika');
     }
 
+    if ($oldversion < 2020040601) {
+
+        // Rename field resourcemodifed on table metadataextractor_tika to resourcemodified.
+        $table = new xmldb_table('metadataextractor_tika');
+        $field = new xmldb_field('resourcemodifed', XMLDB_TYPE_CHAR, '100', null, null, null, '0', 'resourcecreated');
+
+        // Conditionally launch rename field resourcemodifed.
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->rename_field($table, $field, 'resourcemodified');
+        }
+
+        // Tika savepoint reached.
+        upgrade_plugin_savepoint(true, 2020040601, 'metadataextractor', 'tika');
+    }
+
     return true;
 }
