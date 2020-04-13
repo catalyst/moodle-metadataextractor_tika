@@ -4,7 +4,7 @@
     xsi:noNamespaceSchemaLocation="../../../../../../lib/xmldb/xmldb.xsd"
 >
   <TABLES>
-    <TABLE NAME="metadataextractor_tika" COMMENT="Default comment for metadataextractor_tika, please edit me">
+    <TABLE NAME="metadataextractor_tika" COMMENT="Core table for all tika metadata extracted from resources, based on Dublin Core metadata schema.">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
         <FIELD NAME="resourcehash" TYPE="char" LENGTH="40" NOTNULL="true" SEQUENCE="false" COMMENT="A unique identifier associated with the resource based on SHA1 hash of resource content or content identifier."/>

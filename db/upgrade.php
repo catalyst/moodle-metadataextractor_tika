@@ -24,9 +24,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-global $CFG;
-require_once($CFG->dirroot . '/admin/tool/metadata/db/upgradelib.php');
-
 function xmldb_metadataextractor_tika_upgrade($oldversion) {
     global $DB;
 
