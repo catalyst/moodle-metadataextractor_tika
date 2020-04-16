@@ -133,12 +133,32 @@ class server {
     }
 
     /**
-     * Get Tika json encoded metadata for a stream resource.
+     * Handle an HTTP request exception thrown when attempting to extract metadata using Tika Server.
+     *
+     * @param \Exception $exception the exception caught when attempting to make HTTP request.
+     *
+     * @throws \tool_metadata\extraction_exception informative exception to assist in troubleshooting
+     * Tika Server issues.
+     */
+    protected function handle_extraction_request_exception(\Exception $exception) {
+        if (method_exists($exception, 'getResponse')) {
+            $response = $exception->getResponse();
+        } else {
+            $response = null;
+        }
+        $status = !empty($response) ? $response->getStatusCode() : 500;
+        $reason = !empty($response) ? $response->getReasonPhrase() : 'Internal Server Error';
+
+        throw new extraction_exception('error:server:httprequest', 'metadataextractor_tika', '',
+            ['status' => $status, 'reason' => $reason], $exception->getMessage());
+    }
+
+    /**
+     * Get json encoded file metadata from Tika server.
      *
      * @param \Psr\Http\Message\StreamInterface $stream the stream to get metadata for.
      *
      * @return string|null $result json encoded metadata or false if metadata could not be extracted.
-     * @throws \tool_metadata\extraction_exception if file does not exist or http request failed.
      */
     public function get_metadata(StreamInterface $stream) {
         try {
@@ -146,13 +166,8 @@ class server {
                 'headers' => ['Accept' => 'application/json'],
                 'body' => $stream
             ]);
-        } catch (\Exception $e) {
-            if (method_exists($e, 'getReasonPhrase')) {
-                $debuginfo = $e->getReasonPhrase();
-            } else {
-                $debuginfo = $e->getMessage();
-            }
-            throw new extraction_exception('error:server:httprequest', 'metadataextractor_tika', '', null, $debuginfo);
+        } catch (\Exception $exception) {
+            $this->handle_extraction_request_exception($exception);
         }
 
         $result = $this->extract_response_content($response);
@@ -166,7 +181,6 @@ class server {
      * @param \Psr\Http\Message\StreamInterface $stream the stream to get content for.
      *
      * @return string|null $result the Tika parsed content of stream or null if no content.
-     * @throws \tool_metadata\extraction_exception if an error parsing the content.
      */
     public function get_content(StreamInterface $stream) {
 
@@ -175,13 +189,8 @@ class server {
                 'headers' => ['Accept' => 'text/plain'],
                 'body' => $stream,
             ]);
-        } catch (\Exception $e) {
-            if (method_exists($e, 'getReasonPhrase')) {
-                $debuginfo = $e->getReasonPhrase();
-            } else {
-                $debuginfo = $e->getMessage();
-            }
-            throw new extraction_exception('error:server:httprequest', 'metadataextractor_tika', '', null, $debuginfo);
+        } catch (\Exception $exception) {
+            $this->handle_extraction_request_exception($exception);
         }
 
         $result = $this->extract_response_content($response);
@@ -195,7 +204,6 @@ class server {
      * @param \Psr\Http\Message\StreamInterface $stream the stream to get mimetype of content for.
      *
      * @return string|null $result mimetype or null if mimetype could not be determined.
-     * @throws \tool_metadata\extraction_exception
      */
     public function get_mimetype(StreamInterface $stream) {
 
@@ -203,13 +211,8 @@ class server {
             $response = $this->client->request('PUT', "$this->baseuri/detect/stream", [
                 'body' => $stream,
             ]);
-        } catch (\Exception $e) {
-            if (method_exists($e, 'getReasonPhrase')) {
-                $debuginfo = $e->getReasonPhrase();
-            } else {
-                $debuginfo = $e->getMessage();
-            }
-            throw new extraction_exception('error:server:httprequest', 'metadataextractor_tika', '', null, $debuginfo);
+        } catch (\Exception $exception) {
+            $this->handle_extraction_request_exception($exception);
         }
 
         $result = $this->extract_response_content($response);
@@ -222,8 +225,8 @@ class server {
      *
      * @param \Psr\Http\Message\ResponseInterface $response
      *
-     * @return string|null json string of metadata or null if no content.
-     * @throws \tool_metadata\extraction_exception if
+     * @return string|null string of metadata or null if no content.
+     * @throws \tool_metadata\extraction_exception if extraction was not successful.
      */
     private function extract_response_content($response) {
 
