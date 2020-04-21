@@ -24,12 +24,8 @@
 
 namespace metadataextractor_tika;
 
-use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\Psr7\Stream;
 use Psr\Http\Message\StreamInterface;
-use stored_file;
 use tool_metadata\extraction_exception;
 
 defined('MOODLE_INTERNAL') || die();
