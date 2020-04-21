@@ -29,4 +29,4 @@ $plugin->requires  = 2019052003;        // Requires this Moodle version
 $plugin->component = 'metadataextractor_tika';        // Full name of the plugin (used for diagnostics)
 $plugin->maturity = MATURITY_ALPHA;
 
-$plugin->dependencies = array('tool_metadata' => 2020041901);
+$plugin->dependencies = array('tool_metadata' => 2020042101);

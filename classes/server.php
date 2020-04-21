@@ -160,6 +160,7 @@ class server {
         try {
             $response = $this->client->request('PUT', "$this->baseuri/meta", [
                 'headers' => ['Accept' => 'application/json'],
+                'timeout' => \tool_metadata\helper::get_request_timeout_setting(),
                 'body' => $stream
             ]);
         } catch (\Exception $exception) {
@@ -183,6 +184,7 @@ class server {
         try {
             $response = $this->client->request('PUT', "$this->baseuri/tika", [
                 'headers' => ['Accept' => 'text/plain'],
+                'timeout' => \tool_metadata\helper::get_request_timeout_setting(),
                 'body' => $stream,
             ]);
         } catch (\Exception $exception) {
@@ -205,6 +207,7 @@ class server {
 
         try {
             $response = $this->client->request('PUT', "$this->baseuri/detect/stream", [
+                'timeout' => \tool_metadata\helper::get_request_timeout_setting(),
                 'body' => $stream,
             ]);
         } catch (\Exception $exception) {
