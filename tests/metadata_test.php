@@ -155,7 +155,7 @@ class metadataextractor_tika_metadata_testcase extends advanced_testcase {
             ['creator' => $rawdata['meta:creator'], 'title' => $rawdata['meta:title'], 'resourcehash' => $resourcehash]);
         $DB->insert_record(\metadataextractor_tika\metadata_mock::SUPPLEMENTARY_TABLE,
             [
-                'wordcount' =>  $rawdata['meta:word-count'],
+                'wordcount' => $rawdata['meta:word-count'],
                 'pagecount' => $rawdata['meta:page-count'],
                 'resourcehash' => $resourcehash,
             ]);
@@ -201,7 +201,7 @@ class metadataextractor_tika_metadata_testcase extends advanced_testcase {
             ['creator' => $rawdata['meta:creator'], 'title' => $rawdata['meta:title'], 'resourcehash' => $resourcehash]);
         $DB->insert_record(\metadataextractor_tika\metadata_mock::SUPPLEMENTARY_TABLE,
             [
-                'wordcount' =>  $rawdata['meta:word-count'],
+                'wordcount' => $rawdata['meta:word-count'],
                 'pagecount' => $rawdata['meta:page-count'],
                 'resourcehash' => $resourcehash,
             ]);

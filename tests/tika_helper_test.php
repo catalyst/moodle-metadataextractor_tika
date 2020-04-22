@@ -59,11 +59,14 @@ class metadataextractor_tika_helper_test extends advanced_testcase {
     }
 
     /**
+     * Test getting file type from mimetype.
+     *
      * @dataProvider filetype_provider
      *
-     * Test getting file type from mimetype.
+     * @param string $mimetype mimetype to test.
+     * @param string $expected expected file type to return.
      */
-    public function test_get_filetype($mimetype, $expected) {
+    public function test_get_filetype(string $mimetype, string $expected) {
         $actual = \metadataextractor_tika\tika_helper::get_filetype($mimetype);
 
         $this->assertEquals($expected, $actual);
@@ -89,23 +92,26 @@ class metadataextractor_tika_helper_test extends advanced_testcase {
     }
 
     /**
-     * @dataProvider supported_filetypes_provider
-     * Test checking if filetype supported.
+     * Test checking if file type supported.
      *
-     * @param string $filetype the filetype to test.
-     * @param bool $supported should the filetype be supported.
+     * @dataProvider supported_filetypes_provider
+     *
+     * @param string $filetype the file type to test.
+     * @param bool $supported should the file type be supported.
      */
     public function test_is_filetype_supported(string $filetype, bool $supported) {
         $this->assertEquals($supported, \metadataextractor_tika\tika_helper::is_filetype_supported($filetype));
     }
 
     /**
+     * Test getting metadata class based on mimetype.
+     *
      * @dataProvider filetype_provider
      *
-     * @param $mimetype string the IANA mimetype
-     * @param $classsubstring
+     * @param string $mimetype the IANA mimetype.
+     * @param string $classsubstring the class substring expected.
      */
-    public function test_get_metadata_class($mimetype, $classsubstring) {
+    public function test_get_metadata_class(string $mimetype, string $classsubstring) {
         $actual = \metadataextractor_tika\tika_helper::get_metadata_class($mimetype);
 
         if (!in_array($classsubstring, \metadataextractor_tika\tika_helper::SUPPORTED_FILETYPES)) {

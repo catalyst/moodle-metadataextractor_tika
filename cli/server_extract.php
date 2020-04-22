@@ -17,7 +17,7 @@
 /**
  * Tika server raw metadata CLI extractor.
  *
- * @package    tool_metadata
+ * @package    metadataextractor_tika
  * @copyright  2020 Tom Dickman <tomdickman@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -56,7 +56,7 @@ if ($unrecognized) {
 
 if ($options['help']) {
     mtrace(
-<<<HELP
+    <<<HELP
 Extract json metadata from a file using a remote tika server using RESTful API.
 
 Required:
@@ -70,7 +70,7 @@ Required:
 Options:
 -h, --help               Print out this help
 --showdebugging          Print debugging statements
---host                   Set the hostname or IP address of the tika server. 
+--host                   Set the hostname or IP address of the tika server.
                          Note: Required if not set in Moodle instance
 --port                   Set the port number on the host where tika server API is exposed
                          Note: Required if not set in Moodle instance
@@ -92,7 +92,7 @@ $port = get_config('metadataextractor_tika', 'tikaserverport');
 if (!empty($options['host'])) {
     set_config('tikaserverhost', $options['host'], 'metadataextractor_tika');
     $host = $options['host'];
-} elseif (empty($host)) {
+} else if (empty($host)) {
     mtrace('No host name set for tika server, pass in host value or set host in plugin settings.');
     exit(1);
 }
@@ -100,7 +100,7 @@ if (!empty($options['host'])) {
 if (!empty($options['port'])) {
     set_config('tikaserverport', $options['port'], 'metadataextractor_tika');
     $port = $options['port'];
-} elseif (empty($port)) {
+} else if (empty($port)) {
     mtrace('No port value set for tika server, pass in port number or set port number in plugin settings.');
     exit(1);
 }
@@ -122,7 +122,7 @@ if (!empty($options['connection'])) {
 if (empty($options['fileid'])) {
     mtrace('No file id value, you must pass in the id of a file to extract metadata for.');
     exit(1);
-} elseif (!is_number($options['fileid'])) {
+} else if (!is_number($options['fileid'])) {
     mtrace('File id must be a number.');
     exit(1);
 } else {
@@ -130,7 +130,7 @@ if (empty($options['fileid'])) {
     $file = $fs->get_file_by_id($options['fileid']);
 }
 
-if(empty($file)) {
+if (empty($file)) {
     mtrace('No file found with id=' . $options['fileid'] . ' in Moodle instance.');
     exit(1);
 }
@@ -153,7 +153,7 @@ if (!empty($options['metadata']) || !empty($options['json']) ) {
     }
     exit(0);
 
-} elseif (!empty($options['text'])) {
+} else if (!empty($options['text'])) {
 
     $content = $server->get_file_content($file);
     mtrace($content);

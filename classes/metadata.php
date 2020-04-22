@@ -17,7 +17,7 @@
 /**
  * The base metadata model for all tika extracted metadata.
  *
- * @package    tool_metadata
+ * @package    metadataextractor_tika
  * @copyright  2019 Tom Dickman <tomdickman@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -31,7 +31,7 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * The base metadata model for all tika extracted metadata.
  *
- * @package    tool_metadata
+ * @package    metadataextractor_tika
  * @copyright  2019 Tom Dickman <tomdickman@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -42,7 +42,7 @@ class metadata extends \tool_metadata\metadata {
      */
     const TABLE = 'metadataextractor_tika';
 
-    /*
+    /**
      * The table name where supplementary metadata is stored.
      */
     const SUPPLEMENTARY_TABLE = '';
@@ -137,7 +137,12 @@ class metadata extends \tool_metadata\metadata {
     }
 
     /**
-     * @inheritDoc
+     * Return the mapping of instantiating class variables to potential raw metadata keys
+     * in order of priority from highest to lowest.
+     *
+     * See parent class docs for further information on shape of data.
+     *
+     * @return array
      */
     protected function metadata_key_map() {
 
@@ -268,7 +273,9 @@ class metadata extends \tool_metadata\metadata {
     }
 
     /**
-     * @inheritDoc
+     * Get this metadata object as a standard object for database use.
+     *
+     * @return \stdClass
      */
     public function get_record() {
         $recordarray = array_merge((array) $this->get_base_record(), (array) $this->get_supplementary_record());
@@ -333,19 +340,22 @@ class metadata extends \tool_metadata\metadata {
     public function get_supplementary_id() {
         global $DB;
 
-         $result = $DB->get_field($this->get_supplementary_table(), 'id', ['resourcehash' => $this->resourcehash]);
+        $result = $DB->get_field($this->get_supplementary_table(), 'id', ['resourcehash' => $this->resourcehash]);
 
-         if (!empty($result)) {
-             $id = $result;
-         } else {
-             $id = 0;
-         }
+        if (!empty($result)) {
+            $id = $result;
+        } else {
+            $id = 0;
+        }
 
-         return $id;
+        return $id;
     }
 
     /**
-     * @inheritDoc
+     * Create the record for this instance in database.
+     *
+     * @return $this
+     * @throws \tool_metadata\metadata_exception if record already exists.
      */
     public function create() {
         global $DB;
@@ -380,7 +390,9 @@ class metadata extends \tool_metadata\metadata {
     }
 
     /**
-     * @inheritDoc
+     * Update the record for this metadata instance in database.
+     *
+     * @return bool true on success.
      */
     public function update() {
         global $DB;
@@ -408,7 +420,11 @@ class metadata extends \tool_metadata\metadata {
     }
 
     /**
-     * @inheritDoc
+     * Delete the data for this instance from database.
+     *
+     * @return bool true on success.
+     *
+     * @throws \tool_metadata\metadata_exception if unable to get supplementary record id.
      */
     public function delete() {
         global $DB;

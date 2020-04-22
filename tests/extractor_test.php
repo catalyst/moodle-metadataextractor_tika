@@ -26,7 +26,7 @@ use metadataextractor_tika\tika_helper;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once (__DIR__ . '/../../../classes/mock_file_builder.php');
+require_once(__DIR__ . '/../../../classes/mock_file_builder.php');
 
 /**
  * Unit tests for tool_metadata extractor class.
@@ -52,7 +52,7 @@ class metadataextractor_tika_extractor_test extends advanced_testcase {
         $servicetype = $extractor->get_servicetype_set();
         if (empty($servicetype)) {
             $this->markTestSkipped('Test skipped as no valid tika service configuration.');
-        } elseif (!$extractor->is_ready()) {
+        } else if (!$extractor->is_ready()) {
             if ($servicetype == extractor::SERVICETYPE_LOCAL) {
                 $this->markTestSkipped('Test skipped as missing configuration or dependencies for local tika.');
             } else {
@@ -301,11 +301,14 @@ class metadataextractor_tika_extractor_test extends advanced_testcase {
     }
 
     /**
+     * Test validation of url resources.
+     *
      * @dataProvider url_provider
      *
-     * Test validation of url resources.
+     * @param string $externalurl url to validate.
+     * @param bool $isvalid is url valid.
      */
-    public function test_validate_resource_url($externalurl, $isvalid) {
+    public function test_validate_resource_url(string $externalurl, bool $isvalid) {
         $extractor = new extractor();
 
         $course = $this->getDataGenerator()->create_course();

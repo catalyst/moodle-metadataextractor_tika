@@ -17,7 +17,7 @@
 /**
  * The metadata model for presentation files.
  *
- * @package    tool_metadata
+ * @package    metadataextractor_tika
  * @copyright  2020 Tom Dickman <tomdickman@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -29,14 +29,14 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * The metadata model for presentation files.
  *
- * @package    tool_metadata
+ * @package    metadataextractor_tika
  * @copyright  2020 Tom Dickman <tomdickman@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class metadata_presentation extends \metadataextractor_tika\metadata {
 
     /**
-     * int count of slides in presentation.
+     * @var int count of slides in presentation.
      */
     public $slidecount;
 
@@ -95,10 +95,16 @@ class metadata_presentation extends \metadataextractor_tika\metadata {
      */
     public $company;
 
+    /**
+     * The table name where supplementary metadata is stored.
+     */
     const SUPPLEMENTARY_TABLE = 'tika_presentation_metadata';
 
     /**
-     * @inheritDoc
+     * Return the mapping of additional variables which are supplementary to parent
+     * metadata class's variables.
+     *
+     * @return array
      */
     protected function supplementary_key_map() {
         return [

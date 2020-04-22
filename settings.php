@@ -53,7 +53,7 @@ if ($hassiteconfig) {
             get_string('settings:local:pathtotika_help', 'metadataextractor_tika'),
             '/usr/bin/tika-app-1.23.jar'));
 
-    } elseif (!empty($servicetype) && $servicetype == \metadataextractor_tika\extractor::SERVICETYPE_SERVER) {
+    } else if (!empty($servicetype) && $servicetype == \metadataextractor_tika\extractor::SERVICETYPE_SERVER) {
         $settings->add(new admin_setting_heading('metadataextractor_tika/tikaserversettings',
             get_string('settings:server:heading', 'metadataextractor_tika'), ''));
 

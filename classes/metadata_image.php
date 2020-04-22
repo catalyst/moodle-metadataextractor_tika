@@ -17,7 +17,7 @@
 /**
  * The metadata model for image files.
  *
- * @package    tool_metadata
+ * @package    metadataextractor_tika
  * @copyright  2020 Tom Dickman <tomdickman@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -29,7 +29,7 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * The metadata model for image files.
  *
- * @package    tool_metadata
+ * @package    metadataextractor_tika
  * @copyright  2020 Tom Dickman <tomdickman@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -55,8 +55,17 @@ class metadata_image extends \metadataextractor_tika\metadata {
      */
     public $location;
 
+    /**
+     * The table name where supplementary metadata is stored.
+     */
     const SUPPLEMENTARY_TABLE = 'tika_image_metadata';
 
+    /**
+     * Return the mapping of additional variables which are supplementary to parent
+     * metadata class's variables.
+     *
+     * @return array
+     */
     protected function supplementary_key_map() {
         return [
             'height' => ['tiff:ImageLength', 'Image Height', 'height'],

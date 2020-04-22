@@ -72,7 +72,7 @@ class server {
             if (!empty($port)) {
                 $baseuri .= ':' . $port;
             }
-        } elseif (empty($handlerstack)) {
+        } else if (empty($handlerstack)) {
             throw new extraction_exception('error:server:nohostset', 'metadataextractor_tika');
         } else {
             // We have a handler, running tests so set base URI to default.

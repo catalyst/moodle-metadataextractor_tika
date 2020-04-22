@@ -102,8 +102,8 @@ class extractor extends \tool_metadata\extractor {
      *
      * @param object $resource the resource instance to parse.
      * @param string $type the type of the resource to parse.
-     * @param array|string the option/options to apply to Tika extraction, taken from SUPPORTED_EXTRACTION_OPTIONS,
-     * determines what types of metadata will be parsed from resource.
+     * @param array|string $options the option/options to apply to Tika extraction, taken from
+     * SUPPORTED_EXTRACTION_OPTIONS, determines what types of metadata will be parsed from resource.
      *
      * @throws \tool_metadata\extraction_exception if invalid service type, invalid options, or unsupported resource.
      */
@@ -147,8 +147,8 @@ class extractor extends \tool_metadata\extractor {
      * Parse metadata from a resource using locally installed tika-app.
      *
      * @param \Psr\Http\Message\StreamInterface $stream the stream to extract metadata for.
-     * @param array|string the option/options to apply to local extraction, taken from SUPPORTED_EXTRACTION_OPTIONS,
-     * determines what types of data will be parsed from resource.
+     * @param array|string $options the option/options to apply to local extraction, taken from
+     * SUPPORTED_EXTRACTION_OPTIONS, determines what types of data will be parsed from resource.
      *
      * @return string|null data results of Tika parsing resource.
      * @throws \tool_metadata\extraction_exception
@@ -360,7 +360,7 @@ class extractor extends \tool_metadata\extractor {
             if (empty($path)) {
                 $result[] = 'java';
             }
-        } elseif ($servicetype == self::SERVICETYPE_SERVER) {
+        } else if ($servicetype == self::SERVICETYPE_SERVER) {
             if (!class_exists('\GuzzleHttp\Client')) {
                 $result[] = 'guzzle';
             }
@@ -416,7 +416,7 @@ class extractor extends \tool_metadata\extractor {
 
         if (empty($tikapath) || !empty($this->get_missing_dependencies(self::SERVICETYPE_LOCAL))) {
             $result = false;
-        } elseif (!file_exists($tikapath)) {
+        } else if (!file_exists($tikapath)) {
             $result = false;
         } else {
             $cmd = 'java -jar ' . $tikapath . ' --help';
@@ -448,7 +448,7 @@ class extractor extends \tool_metadata\extractor {
                     try {
                         $server = new server();
                         $result = $server->is_ready();
-                    } catch(\Exception $e) {
+                    } catch (\Exception $e) {
                         $result = false;
                     }
                     break;
@@ -486,7 +486,7 @@ class extractor extends \tool_metadata\extractor {
      * @param array|string $options string[] of tika options to apply to CLI command, or a single string option,
      * must be contained in SUPPORTED_EXTRACTION_OPTIONS.
      * @param \GuzzleHttp\Psr7\Stream $stream the resource stream to run tika command on.
-     * @param bool true if stream resource to be closed following command execution.
+     * @param bool $close true if stream resource to be closed following command execution.
      *
      * @return string|null $result the Tika parsed content.
      * @throws \tool_metadata\extraction_exception if local Tika install is not ready, missing dependencies, or invalid option.
@@ -500,7 +500,7 @@ class extractor extends \tool_metadata\extractor {
 
             $optionstring = '';
             foreach ($options as $option) {
-                if(!$this->is_cli_option_supported($option)) {
+                if (!$this->is_cli_option_supported($option)) {
                     throw new extraction_exception('error:local:clioptionnotsupported', 'metadataextractor_tika');
                 }
                 $optionstring .= $option . ' ';

@@ -17,10 +17,9 @@
 /**
  * Mock metadataextractor_tika metadata subclass.
  *
- * @package    tool_metadata
+ * @package    metadataextractor_tika
  * @copyright  2020 Tom Dickman <tomdickman@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @group      tool_metadata
  */
 
 namespace metadataextractor_tika;
@@ -36,12 +35,27 @@ defined('MOODLE_INTERNAL') || die();
  */
 class metadata_mock extends \metadataextractor_tika\metadata {
 
+    /**
+     * @var int test instance variable.
+     */
     public $wordcount;
 
+    /**
+     * @var int test instance variable.
+     */
     public $pagecount;
 
+    /**
+     * The table name where supplementary metadata is stored.
+     */
     public const SUPPLEMENTARY_TABLE = 'metadataextractor_tika_mock';
 
+    /**
+     * Return the mapping of additional variables which are supplementary to parent
+     * metadata class's variables.
+     *
+     * @return array
+     */
     protected function supplementary_key_map() {
         return [
             'wordcount' => ['Word-Count', 'meta:word-count'],

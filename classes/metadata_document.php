@@ -17,7 +17,7 @@
 /**
  * The metadata model for document files.
  *
- * @package    tool_metadata
+ * @package    metadataextractor_tika
  * @copyright  2019 Tom Dickman <tomdickman@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -31,7 +31,7 @@ defined('MOODLE_INTERNAL') || die();
  *
  * This model follows a modified version of Dublin Core tailored for Moodle.
  *
- * @package    tool_metadata
+ * @package    metadataextractor_tika
  * @copyright  2019 Tom Dickman <tomdickman@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -77,8 +77,17 @@ class metadata_document extends \metadataextractor_tika\metadata {
      */
     public $company;
 
+    /**
+     * The table name where supplementary metadata is stored.
+     */
     const SUPPLEMENTARY_TABLE = 'tika_document_metadata';
 
+    /**
+     * Return the mapping of additional variables which are supplementary to parent
+     * metadata class's variables.
+     *
+     * @return array
+     */
     protected function supplementary_key_map() {
         return [
             'pagecount' => ['Page-Count', 'meta:page-count', 'xmpTPg:NPages'],

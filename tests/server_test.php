@@ -97,16 +97,14 @@ class metadataextractor_tika_server_test extends advanced_testcase {
         // Any status other than 'OK' (200) or 'No Content' (204) should throw an extraction exception.
         try {
             $server->get_metadata($stream);
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             $this->assertInstanceOf(\tool_metadata\extraction_exception::class, $exception);
         }
 
         // A connection error should throw an extraction exception.
         try {
             $server->get_metadata($stream);
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             $this->assertInstanceOf(\tool_metadata\extraction_exception::class, $exception);
         }
     }
@@ -154,16 +152,14 @@ class metadataextractor_tika_server_test extends advanced_testcase {
         // Any status other than 'OK' (200) or 'No Content' (204) should throw an extraction exception.
         try {
             $server->get_metadata($stream);
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             $this->assertInstanceOf(\tool_metadata\extraction_exception::class, $exception);
         }
 
         // A connection error should throw an extraction exception.
         try {
             $server->get_metadata($stream);
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             $this->assertInstanceOf(\tool_metadata\extraction_exception::class, $exception);
         }
     }
@@ -224,16 +220,14 @@ class metadataextractor_tika_server_test extends advanced_testcase {
         // Any status other than 'OK' (200) or 'No Content' (204) should throw an extraction exception.
         try {
             $server->get_metadata($stream);
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             $this->assertInstanceOf(\tool_metadata\extraction_exception::class, $exception);
         }
 
         // A connection error should throw an extraction exception.
         try {
             $server->get_metadata($stream);
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             $this->assertInstanceOf(\tool_metadata\extraction_exception::class, $exception);
         }
     }
@@ -281,16 +275,14 @@ class metadataextractor_tika_server_test extends advanced_testcase {
         // Any status other than 'OK' (200) or 'No Content' (204) should throw an extraction exception.
         try {
             $server->get_metadata($stream);
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             $this->assertInstanceOf(\tool_metadata\extraction_exception::class, $exception);
         }
 
         // A connection error should throw an extraction exception.
         try {
             $server->get_metadata($stream);
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             $this->assertInstanceOf(\tool_metadata\extraction_exception::class, $exception);
         }
     }
@@ -331,7 +323,7 @@ class metadataextractor_tika_server_test extends advanced_testcase {
         try {
             $server->get_mimetype($stream);
             $this->fail('Exception expected, none thrown');
-        } catch(\Exception $exception) {
+        } catch (\Exception $exception) {
             $this->assertInstanceOf(\tool_metadata\extraction_exception::class, $exception);
         }
     }
@@ -378,7 +370,7 @@ class metadataextractor_tika_server_test extends advanced_testcase {
         try {
             $server->get_mimetype($stream);
             $this->fail('Exception expected, none thrown');
-        } catch(\Exception $exception) {
+        } catch (\Exception $exception) {
             $this->assertInstanceOf(\tool_metadata\extraction_exception::class, $exception);
         }
     }
@@ -413,7 +405,7 @@ class metadataextractor_tika_server_test extends advanced_testcase {
         try {
             $server->test_connection();
             $this->fail('Exception expected, none thrown');
-        } catch(\Exception $exception) {
+        } catch (\Exception $exception) {
             $this->assertInstanceOf(\tool_metadata\extraction_exception::class, $exception);
         }
 
@@ -421,7 +413,7 @@ class metadataextractor_tika_server_test extends advanced_testcase {
         try {
             $server->test_connection();
             $this->fail('Exception expected, none thrown');
-        } catch(\Exception $exception) {
+        } catch (\Exception $exception) {
             $this->assertInstanceOf(\tool_metadata\extraction_exception::class, $exception);
         }
     }

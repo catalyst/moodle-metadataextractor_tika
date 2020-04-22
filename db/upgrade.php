@@ -17,13 +17,20 @@
 /**
  * Upgrade database for metadataextractor_tika.
  *
- * @package    tool_metadata
+ * @package    metadataextractor_tika
  * @copyright  2020 Tom Dickman <tomdickman@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
+/**
+ * Upgrade script for metadataextractor_tika.
+ *
+ * @param int $oldversion the version upgrading from.
+ *
+ * @return bool always true.
+ */
 function xmldb_metadataextractor_tika_upgrade($oldversion) {
     global $DB;
 
