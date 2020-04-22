@@ -22,6 +22,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 use metadataextractor_tika\extractor;
+use metadataextractor_tika\tika_helper;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -51,27 +52,45 @@ class metadataextractor_tika_extractor_test extends advanced_testcase {
         $servicetype = $extractor->get_servicetype_set();
         if (empty($servicetype)) {
             $this->markTestSkipped('Test skipped as no valid tika service configuration.');
-        } elseif ($servicetype == extractor::SERVICETYPE_LOCAL && !$extractor->is_local_tika_ready()) {
-            $this->markTestSkipped('Test skipped as not missing configuration or dependencies for local tika.');
-        } elseif ($servicetype == extractor::SERVICETYPE_SERVER) {
-            try {
-                $server = new \metadataextractor_tika\server();
-                $ready = $server->is_ready();
-            } catch (\tool_metadata\extraction_exception $ex) {
-                $this->markTestSkipped('Test skipped as server configuration incorrect or connection error to server.');
-            }
-            if (!$ready) {
-                $this->markTestSkipped('Tests skipped as tika server is not ready.');
+        } elseif (!$extractor->is_ready()) {
+            if ($servicetype == extractor::SERVICETYPE_LOCAL) {
+                $this->markTestSkipped('Test skipped as missing configuration or dependencies for local tika.');
+            } else {
+                $this->markTestSkipped('Test skipped as server configuration incorrect or connection error to tika server.');
             }
         }
     }
 
     /**
+     * Test checking if extractor is ready.
+     *
+     * Can not implement unit tests for successful readiness checks, as this would involve installing
+     * java and the tika jar or implementing a running tika server to configure for API requests.
+     */
+    public function test_is_ready() {
+        $extractor = new extractor();
+
+        set_config('tikaservicetype', $extractor::SERVICETYPE_LOCAL, 'metadataextractor_tika');
+        set_config('tikalocalpath', '/some/fake/path/tika-app-1.23.jar', 'metadataextractor_tika');
+
+        $this->assertFalse($extractor->is_ready());
+
+        set_config('tikaservicetype', $extractor::SERVICETYPE_SERVER, 'metadataextractor_tika');
+        set_config('tikaserverhost', 'https://myfaketikaserver.com', 'metadataextractor_tika');
+        set_config('tikaserverport', 9998, 'metadataextractor_tika');
+
+        $this->assertFalse($extractor->is_ready());
+
+        unset_config('tikaservicetype', 'metadataextractor_tika');
+
+        $this->assertFalse($extractor->is_ready());
+    }
+
+    /**
      * Test extracting metadata for a pdf file resource in Moodle.
      */
-    public function test_extract_file_metadata_pdf() {
-
-        [$metadata, $file] = \tool_metadata\mock_file_builder::mock_pdf();
+    public function test_extract_metadata_file_pdf() {
+        [$mockmetadata, $file] = \tool_metadata\mock_file_builder::mock_pdf();
         $extractor = new extractor();
 
         // Make sure we have the correct configuration and dependencies to carry out this test.
@@ -80,17 +99,17 @@ class metadataextractor_tika_extractor_test extends advanced_testcase {
         $result = $extractor->extract_file_metadata($file);
 
         $this->assertNotEmpty($result);
-        $this->assertEquals($metadata['Creator'], $result->creator);
-        $this->assertEquals($metadata['Title'], $result->title);
+        $this->assertInstanceOf(\metadataextractor_tika\metadata_pdf::class, $result);
+        $this->assertEquals($mockmetadata['Author'], $result->creator);
+        $this->assertEquals($mockmetadata['Title'], $result->title);
         $this->assertEquals('en', $result->language);
     }
 
     /**
      * Test extracting metadata for a document type file resource.
      */
-    public function test_extract_file_metadata_document() {
-        list($expectedmetadata, $file) = \tool_metadata\mock_file_builder::mock_document();
-
+    public function test_extract_metadata_file_document() {
+        [$mockmetadata, $file] = \tool_metadata\mock_file_builder::mock_document();
         $extractor = new extractor();
 
         // Make sure we have the correct configuration and dependencies to carry out this test.
@@ -100,14 +119,13 @@ class metadataextractor_tika_extractor_test extends advanced_testcase {
 
         $this->assertNotEmpty($result);
         $this->assertInstanceOf(\metadataextractor_tika\metadata_document::class, $result);
-        $this->assertEquals($expectedmetadata['Title'], $result->title);
+        $this->assertEquals($mockmetadata['Title'], $result->title);
     }
 
     /**
      * Test extracting metadata from a url resource.
      */
-    public function test_extract_url_metadata() {
-
+    public function test_extract_metadata_url() {
         $extractor = new extractor();
         $course = $this->getDataGenerator()->create_course();
         $url = $this->getDataGenerator()->create_module('url', ['course' => $course]);
@@ -118,6 +136,100 @@ class metadataextractor_tika_extractor_test extends advanced_testcase {
         $actual = $extractor->extract_url_metadata($url);
         $this->assertNotEmpty($actual);
         $this->assertInstanceOf(\metadataextractor_tika\metadata::class, $actual);
+    }
+
+    /**
+     * Test extracting mimetype from a document file.
+     */
+    public function test_extract_mimetype_file_document() {
+        [$mockmetadata, $file] = \tool_metadata\mock_file_builder::mock_document();
+        $extractor = new extractor();
+
+        // Make sure we have the correct configuration and dependencies to carry out this test.
+        $this->can_test_extraction($extractor);
+
+        $actual = $extractor->extract_file_mimetype($file);
+
+        $this->assertEquals('application/vnd.openxmlformats-officedocument.wordprocessingml.document', $actual);
+    }
+
+    /**
+     * Test extracting mimetype from a pdf file.
+     */
+    public function test_extract_mimetype_file_pdf() {
+        [$mockmetadata, $file] = \tool_metadata\mock_file_builder::mock_pdf();
+        $extractor = new extractor();
+
+        // Make sure we have the correct configuration and dependencies to carry out this test.
+        $this->can_test_extraction($extractor);
+
+        $actual = $extractor->extract_file_mimetype($file);
+        $this->assertEquals('application/pdf', $actual);
+    }
+
+    /**
+     * Test extracting mimetype from a url.
+     */
+    public function test_extract_mimetype_url() {
+        $extractor = new extractor();
+        $course = $this->getDataGenerator()->create_course();
+        $url = $this->getDataGenerator()->create_module('url', ['course' => $course]);
+
+        // Make sure we have the correct configuration and dependencies to carry out this test.
+        $this->can_test_extraction($extractor);
+
+        $actual = $extractor->extract_url_mimetype($url);
+        $this->assertEquals('text/html', $actual);
+    }
+
+    /**
+     * Test extracting content from a PDF.
+     */
+    public function test_extract_content_file_pdf() {
+        [$mockmetadata, $file] = \tool_metadata\mock_file_builder::mock_pdf();
+        $extractor = new extractor();
+
+        // Make sure we have the correct configuration and dependencies to carry out this test.
+        $this->can_test_extraction($extractor);
+
+        $actual = $extractor->extract_file_content($file);
+
+        $this->assertNotEmpty($actual);
+        $this->assertStringContainsString($mockmetadata['Content'], $actual);
+    }
+
+    /**
+     * Test extracting content from a document file.
+     */
+    public function test_extract_content_file_document() {
+        [$mockmetadata, $file] = \tool_metadata\mock_file_builder::mock_document();
+        $extractor = new extractor();
+
+        // Make sure we have the correct configuration and dependencies to carry out this test.
+        $this->can_test_extraction($extractor);
+
+        $actual = $extractor->extract_file_content($file);
+
+        $this->assertNotEmpty($actual);
+        $this->assertStringContainsString($mockmetadata['Content'], $actual);
+    }
+
+    /**
+     * Test extracting content from a document file.
+     */
+    public function test_extract_content_url() {
+        $course = $this->getDataGenerator()->create_course();
+        $url = $this->getDataGenerator()->create_module('url', ['course' => $course]);
+
+        $extractor = new extractor();
+
+        // Make sure we have the correct configuration and dependencies to carry out this test.
+        $this->can_test_extraction($extractor);
+
+        $actual = $extractor->extract_url_content($url);
+
+        $this->assertNotEmpty($actual);
+        $this->assertIsString($actual);
     }
 
     /**

@@ -24,18 +24,16 @@
 
 namespace metadataextractor_tika;
 
-use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Psr7\Response;
-use stored_file;
+use Psr\Http\Message\StreamInterface;
 use tool_metadata\extraction_exception;
 
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
-require_once($CFG->dirroot . '/local/aws/sdk/aws-autoloader.php');
 require_once($CFG->dirroot . '/mod/url/locallib.php');
 require_once($CFG->dirroot . '/admin/tool/metadata/constants.php');
+require_once($CFG->dirroot . '/admin/tool/metadata/vendor/autoload.php');
 
 /**
  * Class for making API requests to a Tika server.
@@ -81,13 +79,6 @@ class server {
             $baseuri = $CFG->wwwroot;
         }
 
-        // Check that local_aws plugin is installed as this is a dependency for tika server configuration.
-        $dependencyinfo = \core_plugin_manager::instance()->get_plugin_info('local_aws');
-        if (empty($dependencyinfo)) {
-            throw new extraction_exception('error:missingdependency', 'metadataextractor_tika', '',
-                'local_aws');
-        }
-
         // We don't add the baseuri as a param because we may want to use this client
         // to make other external calls, instead pass it into client requests.
         $this->baseuri = $baseuri;
@@ -102,55 +93,77 @@ class server {
     }
 
     /**
-     * Test that server is ready to perform requests.
+     * Test the connection to Tika server and get a response.
      *
-     * @throws \tool_metadata\extraction_exception
+     * @return \Psr\Http\Message\ResponseInterface $response HTTP request response.
+     * @throws \tool_metadata\extraction_exception on connection error.
+     */
+    public function test_connection() {
+        // This tika server api call should return HELLO message.
+        try {
+            $response = $this->client->request('GET', "$this->baseuri/tika");
+        } catch (GuzzleException $ex) {
+            throw new extraction_exception('error:connectionerror', 'metadataextractor_tika');
+        }
+
+        return $response;
+    }
+
+    /**
+     * Test that server is ready to perform requests.
      */
     public function is_ready() {
         $result = false;
 
         try {
-            // This tika server api call should return HELLO message.
-            $response = $this->client->request('GET', "$this->baseuri/tika");
+            $response = $this->test_connection();
+
             if ($response->getStatusCode() == 200) {
                 $result = true;
             }
-        } catch (GuzzleException $ex) {
-            throw new extraction_exception('error:connectionerror', 'metadataextractor_tika');
+        } catch (extraction_exception $exception) {
+            $result = false;
         }
 
         return $result;
+    }
+
+    /**
+     * Handle an HTTP request exception thrown when attempting to extract metadata using Tika Server.
+     *
+     * @param \Exception $exception the exception caught when attempting to make HTTP request.
+     *
+     * @throws \tool_metadata\extraction_exception informative exception to assist in troubleshooting
+     * Tika Server issues.
+     */
+    protected function handle_extraction_request_exception(\Exception $exception) {
+        if (method_exists($exception, 'getResponse')) {
+            $response = $exception->getResponse();
+        } else {
+            $response = null;
+        }
+        $status = !empty($response) ? $response->getStatusCode() : 500;
+        $reason = !empty($response) ? $response->getReasonPhrase() : 'Internal Server Error';
+
+        throw new extraction_exception('error:server:httprequest', 'metadataextractor_tika', '',
+            ['status' => $status, 'reason' => $reason], $exception->getMessage());
     }
 
     /**
      * Get json encoded file metadata from Tika server.
      *
-     * @param \stored_file $file the file to extract metadata for.
+     * @param \Psr\Http\Message\StreamInterface $stream the stream to get metadata for.
      *
-     * @return string|false $result json encoded metadata or false if metadata could not be extracted.
-     * @throws \tool_metadata\extraction_exception if file does not exist or http request failed.
+     * @return string|null $result json encoded metadata or false if metadata could not be extracted.
      */
-    public function get_file_metadata(stored_file $file) {
-
-        $resource = $file->get_content_file_handle();
-
-        if (empty($resource)) {
-            throw new extraction_exception('error:resource:contentdoesnotexist', 'metadataextractor_tika', '',
-                ['id' => $file->get_id(), 'type' => TOOL_METADATA_RESOURCE_TYPE_FILE]);
-        }
-
+    public function get_metadata(StreamInterface $stream) {
         try {
             $response = $this->client->request('PUT', "$this->baseuri/meta", [
                 'headers' => ['Accept' => 'application/json'],
-                'body' => $resource
+                'body' => $stream
             ]);
-        } catch (\Exception $e) {
-            if (method_exists($e, 'getReasonPhrase')) {
-                $debuginfo = $e->getReasonPhrase();
-            } else {
-                $debuginfo = $e->getMessage();
-            }
-            throw new extraction_exception('error:server:httprequest', 'metadataextractor_tika', '', null, $debuginfo);
+        } catch (\Exception $exception) {
+            $this->handle_extraction_request_exception($exception);
         }
 
         $result = $this->extract_response_content($response);
@@ -159,71 +172,21 @@ class server {
     }
 
     /**
-     * Get json encoded url metadata from Tika server.
+     * Get the Tika parsed content of a stream resource.
      *
-     * @param $url object mod_url instance.
+     * @param \Psr\Http\Message\StreamInterface $stream the stream to get content for.
      *
-     * @return object result object containing {'metadata' => string, 'contenthash' => string, 'success' => bool}
-     * @throws \tool_metadata\extraction_exception
+     * @return string|null $result the Tika parsed content of stream or null if no content.
      */
-    public function get_url_metadata($url) {
-
-        $cm = get_coursemodule_from_instance('url', $url->id, $url->course, false, MUST_EXIST);
-        $fullurl = url_get_full_url($url, $cm, $url->course);
-
-        try {
-            // Get the url content to pass to tika, only allows up to 5 redirects.
-            $urlresponse = $this->client->request('GET', $fullurl);
-            $stream = $urlresponse->getBody();
-
-            // Use the Tika Server meta/form path, tika/form is not support for HTML docs.
-            $tikaresponse = $this->client->request('PUT', "$this->baseuri/meta", [
-                'headers' => ['Accept' => 'application/json'],
-                'body' => $stream,
-            ]);
-        } catch (\Exception $e) {
-            if (method_exists($e, 'getReasonPhrase')) {
-                $debuginfo = $e->getReasonPhrase();
-            } else {
-                $debuginfo = $e->getMessage();
-            }
-            throw new extraction_exception('error:server:httprequest', 'metadataextractor_tika', '', null, $debuginfo);
-        }
-
-        $result = $this->extract_response_content($tikaresponse);
-
-        return $result;
-    }
-
-    /**
-     * Get Tika extracted content from file.
-     *
-     * @param \stored_file $file the file to extract content for.
-     *
-     * @return string|false $result content or false if content could not be extracted.
-     * @throws \tool_metadata\extraction_exception
-     */
-    public function get_file_content(stored_file $file) {
-
-        $resource = $file->get_content_file_handle();
-
-        if (empty($resource)) {
-            throw new extraction_exception('error:resource:contentdoesnotexist', 'metadataextractor_tika', '',
-                ['id' => $file->get_id(), 'type' => TOOL_METADATA_RESOURCE_TYPE_FILE]);
-        }
+    public function get_content(StreamInterface $stream) {
 
         try {
             $response = $this->client->request('PUT', "$this->baseuri/tika", [
                 'headers' => ['Accept' => 'text/plain'],
-                'body' => $resource,
+                'body' => $stream,
             ]);
-        } catch (\Exception $e) {
-            if (method_exists($e, 'getReasonPhrase')) {
-                $debuginfo = $e->getReasonPhrase();
-            } else {
-                $debuginfo = $e->getMessage();
-            }
-            throw new extraction_exception('error:server:httprequest', 'metadataextractor_tika', '', null, $debuginfo);
+        } catch (\Exception $exception) {
+            $this->handle_extraction_request_exception($exception);
         }
 
         $result = $this->extract_response_content($response);
@@ -231,23 +194,50 @@ class server {
         return $result;
     }
 
-
     /**
-     * Extract metadata string from content of response.
+     * Get the Tika parsed mimetype for a stream resource.
      *
-     * @param \GuzzleHttp\Psr7\Response $response
+     * @param \Psr\Http\Message\StreamInterface $stream the stream to get mimetype of content for.
      *
-     * @return string|false json string of metadata or false if failed.
+     * @return string|null $result mimetype or null if mimetype could not be determined.
      */
-    private function extract_response_content(\GuzzleHttp\Psr7\Response $response) {
+    public function get_mimetype(StreamInterface $stream) {
 
-        if ($response->getStatusCode() == 200) {
-            $result = $response->getBody()->getContents();
-        } else {
-            throw new extraction_exception('error:server', 'metadataextractor_tika');
+        try {
+            $response = $this->client->request('PUT', "$this->baseuri/detect/stream", [
+                'body' => $stream,
+            ]);
+        } catch (\Exception $exception) {
+            $this->handle_extraction_request_exception($exception);
         }
+
+        $result = $this->extract_response_content($response);
 
         return $result;
     }
 
+    /**
+     * Extract metadata string from content of response.
+     *
+     * @param \Psr\Http\Message\ResponseInterface $response
+     *
+     * @return string|null string of metadata or null if no content.
+     * @throws \tool_metadata\extraction_exception if extraction was not successful.
+     */
+    private function extract_response_content($response) {
+
+        if ($response->getStatusCode() == 200) {
+            $result = $response->getBody()->getContents();
+        } else if ($response->getStatusCode() == 204) {
+            $result = null;
+        } else {
+            throw new extraction_exception('error:server', 'metadataextractor_tika');
+        }
+
+        if (empty($result)) {
+            $result = null;
+        }
+
+        return $result;
+    }
 }
