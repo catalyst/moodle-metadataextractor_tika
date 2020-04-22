@@ -39,12 +39,6 @@ class metadataextractor_tika_server_test extends advanced_testcase {
 
         set_config('tikaserverhost', 'localhost', 'metadataextractor_tika');
         set_config('tikaserverport', 9998, 'metadataextractor_tika');
-
-        $dependencyinfo = \core_plugin_manager::instance()->get_plugin_info('local_aws');
-        // Skip server tests if local_aws plugin dependency isn't installed as exceptions will be thrown.
-        if (empty($dependencyinfo)) {
-            $this->markTestSkipped(get_string('error:missingdependency', 'metadataextractor_tika', 'local_aws'));
-        }
     }
 
     /**
@@ -58,6 +52,120 @@ class metadataextractor_tika_server_test extends advanced_testcase {
         // Expect an exception to be thrown when there is no tika server hostname configured.
         $this->expectException(\tool_metadata\extraction_exception::class);
         new metadataextractor_tika\server();
+    }
+
+    /**
+     * Test extraction of content for a file resource.
+     */
+    public function test_get_content_file() {
+        [$metadata, $file] = \tool_metadata\mock_file_builder::mock_pdf();
+
+        $responsecontent = $file->get_content();
+
+        // Add mock responses to the handlerstack.
+        $mock = new \GuzzleHttp\Handler\MockHandler([
+            // Mock a standard JSON encoded successful response.
+            new \GuzzleHttp\Psr7\Response(200,
+                ['Content-Type' => ['text/plain']],
+                $responsecontent
+            ),
+            // Mock an empty response.
+            new \GuzzleHttp\Psr7\Response(204,
+                ['Content-Length' => 0]
+            ),
+            // Mock a 200 response other than success or empty.
+            new \GuzzleHttp\Psr7\Response(201,
+                ['Location' => '/index.html']
+            ),
+            // Mock a connection error exception response.
+            new \GuzzleHttp\Exception\ConnectException('connection error',
+                new \GuzzleHttp\Psr7\Request('GET', 'localhost:9998/tika'))
+        ]);
+        $handlerstack = \GuzzleHttp\HandlerStack::create($mock);
+
+        $server = new \metadataextractor_tika\server($handlerstack);
+
+        // A successful call should return plain text content.
+        $stream = \tool_metadata\helper::get_resource_stream($file, TOOL_METADATA_RESOURCE_TYPE_FILE);
+        $actual = $server->get_metadata($stream);
+        $this->assertEquals($responsecontent, $actual);
+        $this->assertIsString($actual);
+
+        // An empty body response should return a `null` value.
+        $this->assertEmpty($server->get_metadata($stream));
+
+        // Any status other than 'OK' (200) or 'No Content' (204) should throw an extraction exception.
+        try {
+            $server->get_metadata($stream);
+        }
+        catch (\Exception $exception) {
+            $this->assertInstanceOf(\tool_metadata\extraction_exception::class, $exception);
+        }
+
+        // A connection error should throw an extraction exception.
+        try {
+            $server->get_metadata($stream);
+        }
+        catch (\Exception $exception) {
+            $this->assertInstanceOf(\tool_metadata\extraction_exception::class, $exception);
+        }
+    }
+
+    /**
+     * Test extraction of content from a mod_url resource.
+     */
+    public function test_get_content_url() {
+        global $CFG;
+
+        $fixture = fopen($CFG->dirroot . '/admin/tool/metadata/tests/fixtures/url_fixture.html', 'rb');
+        $responsecontent = stream_get_contents($fixture);
+
+        // Add mock responses to the handlerstack.
+        $mock = new \GuzzleHttp\Handler\MockHandler([
+            // Mock a standard JSON encoded successful response.
+            new \GuzzleHttp\Psr7\Response(200,
+                ['Content-Type' => ['text/plain']],
+                $responsecontent
+            ),
+            // Mock an empty response.
+            new \GuzzleHttp\Psr7\Response(204,
+                ['Content-Length' => 0]
+            ),
+            // Mock a 200 response other than success or empty.
+            new \GuzzleHttp\Psr7\Response(201,
+                ['Location' => '/index.html']
+            ),
+            // Mock a connection error exception response.
+            new \GuzzleHttp\Exception\ConnectException('connection error',
+                new \GuzzleHttp\Psr7\Request('GET', 'localhost:9998/tika'))
+        ]);
+        $handlerstack = \GuzzleHttp\HandlerStack::create($mock);
+
+        $server = new \metadataextractor_tika\server($handlerstack);
+        $stream = new \GuzzleHttp\Psr7\Stream($fixture);
+
+        $actual = $server->get_metadata($stream);
+        $this->assertEquals($responsecontent, $actual);
+        $this->assertIsString($actual);
+
+        // An empty body response should return a `null` value.
+        $this->assertEmpty($server->get_metadata($stream));
+
+        // Any status other than 'OK' (200) or 'No Content' (204) should throw an extraction exception.
+        try {
+            $server->get_metadata($stream);
+        }
+        catch (\Exception $exception) {
+            $this->assertInstanceOf(\tool_metadata\extraction_exception::class, $exception);
+        }
+
+        // A connection error should throw an extraction exception.
+        try {
+            $server->get_metadata($stream);
+        }
+        catch (\Exception $exception) {
+            $this->assertInstanceOf(\tool_metadata\extraction_exception::class, $exception);
+        }
     }
 
     /**
@@ -92,6 +200,10 @@ class metadataextractor_tika_server_test extends advanced_testcase {
             new \GuzzleHttp\Psr7\Response(204,
                 ['Content-Length' => 0]
             ),
+            // Mock a 200 response other than success or empty.
+            new \GuzzleHttp\Psr7\Response(201,
+                ['Location' => '/index.html']
+            ),
             // Mock a connection error exception response.
             new \GuzzleHttp\Exception\ConnectException('connection error',
                 new \GuzzleHttp\Psr7\Request('GET', 'localhost:9998/tika'))
@@ -106,7 +218,10 @@ class metadataextractor_tika_server_test extends advanced_testcase {
         $this->assertEquals($responsecontent, $actual);
         $this->assertJson($actual);
 
-        // Any status other than 'OK' (200) should throw an extraction exception.
+        // An empty body response should return a `null` value.
+        $this->assertEmpty($server->get_metadata($stream));
+
+        // Any status other than 'OK' (200) or 'No Content' (204) should throw an extraction exception.
         try {
             $server->get_metadata($stream);
         }
@@ -125,8 +240,6 @@ class metadataextractor_tika_server_test extends advanced_testcase {
 
     /**
      * Test extraction of metadata from a mod_url resource.
-     *
-     * @throws \tool_metadata\extraction_exception
      */
     public function test_get_metadata_url() {
         global $CFG;
@@ -136,11 +249,22 @@ class metadataextractor_tika_server_test extends advanced_testcase {
 
         // Add mock responses to the handlerstack.
         $mock = new \GuzzleHttp\Handler\MockHandler([
-            // Mock tika server returned metadata for the html retrieved.
+            // Mock a standard JSON encoded successful response.
             new \GuzzleHttp\Psr7\Response(200,
                 ['Content-Type' => ['application/json']],
                 $responsecontent
             ),
+            // Mock an empty response.
+            new \GuzzleHttp\Psr7\Response(204,
+                ['Content-Length' => 0]
+            ),
+            // Mock a 200 response other than success or empty.
+            new \GuzzleHttp\Psr7\Response(201,
+                ['Location' => '/index.html']
+            ),
+            // Mock a connection error exception response.
+            new \GuzzleHttp\Exception\ConnectException('connection error',
+                new \GuzzleHttp\Psr7\Request('GET', 'localhost:9998/tika'))
         ]);
         $handlerstack = \GuzzleHttp\HandlerStack::create($mock);
 
@@ -148,11 +272,27 @@ class metadataextractor_tika_server_test extends advanced_testcase {
         $stream = new \GuzzleHttp\Psr7\Stream($fixture);
 
         $actual = $server->get_metadata($stream);
-
-        $this->assertNotEmpty($actual);
-        $this->assertIsString($actual);
         $this->assertEquals($responsecontent, $actual);
         $this->assertJson($actual);
+
+        // An empty body response should return a `null` value.
+        $this->assertEmpty($server->get_metadata($stream));
+
+        // Any status other than 'OK' (200) or 'No Content' (204) should throw an extraction exception.
+        try {
+            $server->get_metadata($stream);
+        }
+        catch (\Exception $exception) {
+            $this->assertInstanceOf(\tool_metadata\extraction_exception::class, $exception);
+        }
+
+        // A connection error should throw an extraction exception.
+        try {
+            $server->get_metadata($stream);
+        }
+        catch (\Exception $exception) {
+            $this->assertInstanceOf(\tool_metadata\extraction_exception::class, $exception);
+        }
     }
 
     /**

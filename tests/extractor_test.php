@@ -215,6 +215,24 @@ class metadataextractor_tika_extractor_test extends advanced_testcase {
     }
 
     /**
+     * Test extracting content from a document file.
+     */
+    public function test_extract_content_url() {
+        $course = $this->getDataGenerator()->create_course();
+        $url = $this->getDataGenerator()->create_module('url', ['course' => $course]);
+
+        $extractor = new extractor();
+
+        // Make sure we have the correct configuration and dependencies to carry out this test.
+        $this->can_test_extraction($extractor);
+
+        $actual = $extractor->extract_url_content($url);
+
+        $this->assertNotEmpty($actual);
+        $this->assertIsString($actual);
+    }
+
+    /**
      * Test getting missing dependencies.
      */
     public function test_get_missing_dependencies() {
