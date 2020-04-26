@@ -379,7 +379,11 @@ class metadata extends \tool_metadata\metadata {
 
         if ($this->has_supplementary_data()) {
             $supplementaryrecord = $this->get_supplementary_record();
-            $DB->insert_record($this->get_supplementary_table(), $supplementaryrecord);
+            if (empty($supplementaryrecord->id)) {
+                $DB->insert_record($this->get_supplementary_table(), $supplementaryrecord);
+            } else {
+                $DB->update_record($this->get_supplementary_table(), $supplementaryrecord);
+            }
         }
 
         $transaction->allow_commit();
@@ -409,11 +413,18 @@ class metadata extends \tool_metadata\metadata {
 
         if ($success && $this->has_supplementary_data()) {
             $supplementaryrecord = $this->get_supplementary_record();
-            $success = $DB->update_record($this->get_supplementary_table(), $supplementaryrecord);
+            if (empty($supplementaryrecord->id)) {
+                $DB->insert_record($this->get_supplementary_table(), $supplementaryrecord);
+
+            } else {
+                $DB->update_record($this->get_supplementary_table(), $supplementaryrecord);
+            }
         }
 
         if ($success) {
             $transaction->allow_commit();
+        } else {
+            $transaction->rollback($e);
         }
 
         return $success;
