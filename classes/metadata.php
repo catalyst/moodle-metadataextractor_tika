@@ -24,6 +24,7 @@
 
 namespace metadataextractor_tika;
 
+use tool_metadata\extraction_exception;
 use tool_metadata\metadata_exception;
 
 defined('MOODLE_INTERNAL') || die();
@@ -417,14 +418,12 @@ class metadata extends \tool_metadata\metadata {
                 $DB->insert_record($this->get_supplementary_table(), $supplementaryrecord);
 
             } else {
-                $DB->update_record($this->get_supplementary_table(), $supplementaryrecord);
+                $success = $DB->update_record($this->get_supplementary_table(), $supplementaryrecord);
             }
         }
 
         if ($success) {
             $transaction->allow_commit();
-        } else {
-            $transaction->rollback($e);
         }
 
         return $success;

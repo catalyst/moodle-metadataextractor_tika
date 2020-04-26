@@ -44,6 +44,7 @@ $string['setting:tikaservicetype:local'] = 'Local Tika application';
 
 // Error strings.
 $string['error:connectionerror'] = 'Error connecting to Tika server, please check server settings.';
+$string['error:database:'] = 'Error connecting to Tika server, please check server settings.';
 $string['error:invalidservicetype'] = 'Invalid Tika service type set.';
 $string['error:local:config'] = 'Local Tika application not installed or incorrectly configured.';
 $string['error:local:clioptionnotsupported'] = 'Tika CLI option is not supported.';
