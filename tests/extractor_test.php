@@ -86,6 +86,31 @@ class metadataextractor_tika_extractor_test extends advanced_testcase {
     }
 
     /**
+     * Test cleaning metadata.
+     */
+    public function test_clean_metadata() {
+        $details = new stdClass();
+        $details->title = 'The Nexus-6 replicant saga';
+        $details->published = 2019;
+
+        $metadata = [
+            'Content-Type' => 'application/pdf',
+            'Creator' => ['Dr. Eldon Tyrell', 'Tyrell Corporation'],
+            'Details' => $details
+        ];
+
+        $jsonmetadata = json_encode($metadata);
+
+        $extractor = new extractor();
+        $actual = $extractor->clean_metadata($jsonmetadata);
+
+        $this->assertIsString($actual['Creator']);
+        // Multi-value metadata should be concatenated to a single string.
+        $this->assertEquals($actual['Creator'], 'Dr. Eldon Tyrell, Tyrell Corporation');
+        $this->assertEquals($actual['Details'], 'The Nexus-6 replicant saga, 2019');
+    }
+
+    /**
      * Test extracting metadata for a pdf file resource in Moodle.
      */
     public function test_extract_metadata_file_pdf() {
