@@ -229,7 +229,7 @@ class metadataextractor_tika_metadata_testcase extends advanced_testcase {
         $resourcehash = sha1(random_string());
 
         $this->expectException(\tool_metadata\metadata_exception::class);
-        $unused = new \metadataextractor_tika\metadata_mock(0, $resourcehash);
+        new \metadataextractor_tika\metadata_mock(0, $resourcehash);
     }
 
     public function test_populate_from_raw() {

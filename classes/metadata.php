@@ -233,9 +233,6 @@ class metadata extends \tool_metadata\metadata {
                         $this->$property = $value;
                     }
                 }
-                $success = true;
-            } else {
-                $success = false;
             }
         }
 
@@ -249,7 +246,7 @@ class metadata extends \tool_metadata\metadata {
      *
      * @return bool $success true if populated successfully, false otherwise.
      */
-    public function populate_from_resourcehash(string $resourcehash): bool {
+    protected function populate_from_resourcehash(string $resourcehash): bool {
         global $DB;
 
         // Populate base variables.
@@ -265,9 +262,6 @@ class metadata extends \tool_metadata\metadata {
                         $this->$property = $value;
                     }
                 }
-                $success = true;
-            } else {
-                $success = false;
             }
         }
         return $success;
