@@ -122,4 +122,47 @@ class metadataextractor_tika_helper_test extends advanced_testcase {
 
         $this->assertEquals($expected, $actual);
     }
+
+    /**
+     * Data provider for testing extraction of 'type/subtype' from a mimetype.
+     *
+     * @return array string[][] each element in shape of:
+     * [
+     *     string complete mimetype with encoding,
+     *     string mimetype within header,
+     * ]
+     */
+    public function mimetype_provider() {
+        return [
+            ['multipart/form-data; boundary=---------------------------8721656041911415653955004498', 'multipart/form-data'],
+            ['application/json; charset=utf-8', 'application/json'],
+            ['application/octet-stream', 'application/octet-stream'],
+            ['text/html; charset=utf-8', 'text/html'],
+            ['text/plain; charset=ISO-8859-1', 'text/plain'],
+            ['text/plain', 'text/plain'],
+            ['text/html', 'text/html'],
+            ['application/pdf', 'application/pdf'],
+            ['application/msword', 'application/msword'],
+            ['application/vnd.oasis.opendocument.text', 'application/vnd.oasis.opendocument.text'],
+            ['video/mp4; codecs="avc1.4d002a"', 'video/mp4'],
+            ['audio/ogg; codecs=vorbis', 'audio/ogg'],
+
+        ];
+    }
+
+    /**
+     * Test extracting the subtype/type from a full mimetype with parameters, as may be found in
+     * a 'Content-Type' header.
+     *
+     * @dataProvider mimetype_provider
+     *
+     * @param string $mimetype the raw mimetype value with any parameters included.
+     * @param string $expected the expected mimetype without parameters.
+     */
+    public function test_get_mimetype_without_parameters(string $mimetype, string $expected) {
+        $actual = \metadataextractor_tika\tika_helper::get_mimetype_without_parameters($mimetype);
+
+        $this->assertIsString($actual);
+        $this->assertEquals($expected, $actual);
+    }
 }
