@@ -229,7 +229,7 @@ class metadataextractor_tika_metadata_testcase extends advanced_testcase {
         $resourcehash = sha1(random_string());
 
         $this->expectException(\tool_metadata\metadata_exception::class);
-        $unused = new \metadataextractor_tika\metadata_mock(0, $resourcehash);
+        new \metadataextractor_tika\metadata_mock(0, $resourcehash);
     }
 
     public function test_populate_from_raw() {
@@ -301,6 +301,51 @@ class metadataextractor_tika_metadata_testcase extends advanced_testcase {
         $metadata->create();
     }
 
+    /**
+     * Test edge case of creating metadata record when supplementary metadata
+     * record already exists.
+     */
+    public function test_create_supplementary_record_exists() {
+        global $DB;
+
+        // Emulate tika extracted raw metadata.
+        $rawdata = [];
+        // Fixed tika fields.
+        $rawdata['meta:creator'] = 'Moodle';
+        $rawdata['meta:title'] = 'Test title';
+        // Supplementary fields.
+        $rawdata['meta:word-count'] = 3000;
+        $rawdata['meta:page-count'] = 3;
+
+        // Emulate resourcehash from resource content.
+        $resourcehash = sha1(random_string());
+
+        // Create existing supplementary record.
+        $record = new stdClass();
+        $record->resourcehash = $resourcehash;
+        $record->wordcount = 2000;
+        $record->pagecount = 2;
+        $existingsupplementaryid = $DB->insert_record(\metadataextractor_tika\metadata_mock::SUPPLEMENTARY_TABLE, $record);
+
+        $metadata = new \metadataextractor_tika\metadata_mock(0, $resourcehash, $rawdata);
+        $metadata->create();
+
+        // Metadata instance variable values should be correctly stored in database.
+        $baserecord = $DB->get_record(\metadataextractor_tika\metadata_mock::TABLE, ['id' => $metadata->id]);
+        $this->assertEquals($metadata->get_resourcehash(), $baserecord->resourcehash);
+        $this->assertEquals($metadata->get('creator'), $baserecord->creator);
+        $this->assertEquals($metadata->get('title'), $baserecord->title);
+        $supplementaryrecord = $DB->get_record(\metadataextractor_tika\metadata_mock::SUPPLEMENTARY_TABLE,
+            ['id' => $existingsupplementaryid]);
+        $this->assertEquals($metadata->get_resourcehash(), $supplementaryrecord->resourcehash);
+        $this->assertEquals($metadata->get('wordcount'), $supplementaryrecord->wordcount);
+        $this->assertEquals($metadata->get('pagecount'), $supplementaryrecord->pagecount);
+
+        // Cannot create metadata records if record already exists.
+        $this->expectException(\tool_metadata\metadata_exception::class);
+        $metadata->create();
+    }
+
     public function test_update() {
         global $DB;
 
@@ -319,7 +364,52 @@ class metadataextractor_tika_metadata_testcase extends advanced_testcase {
         $metadata = new \metadataextractor_tika\metadata_mock(0, $resourcehash, $rawdata);
         $metadata->create();
 
-        $id = $metadata->id;
+        // Update metadata.
+        $metadata->set('creator', 'Moodle 2.0');
+        $metadata->set('title', 'Updated title');
+        $metadata->set('wordcount', 4000);
+        $metadata->set('pagecount', 4);
+
+        $result = $metadata->update();
+
+        $this->assertTrue($result);
+
+        // Metadata instance variable values should be correctly stored in database.
+        $baserecord = $DB->get_record(\metadataextractor_tika\metadata_mock::TABLE, ['id' => $metadata->id]);
+        $this->assertEquals($metadata->get_resourcehash(), $baserecord->resourcehash);
+        $this->assertEquals($metadata->get('creator'), $baserecord->creator);
+        $this->assertEquals($metadata->get('title'), $baserecord->title);
+        $supplementaryrecord = $DB->get_record(\metadataextractor_tika\metadata_mock::SUPPLEMENTARY_TABLE,
+            ['resourcehash' => $metadata->get_resourcehash()]);
+        $this->assertEquals($metadata->get_resourcehash(), $supplementaryrecord->resourcehash);
+        $this->assertEquals($metadata->get('wordcount'), $supplementaryrecord->wordcount);
+        $this->assertEquals($metadata->get('pagecount'), $supplementaryrecord->pagecount);
+    }
+
+    /**
+     * Test edge case of updating metadata record when supplementary metadata
+     * record does not exist.
+     */
+    public function test_update_supplementary_record_not_exists() {
+        global $DB;
+
+        // Emulate tika extracted raw metadata.
+        $rawdata = [];
+        // Fixed tika fields.
+        $rawdata['meta:creator'] = 'Moodle';
+        $rawdata['meta:title'] = 'Test title';
+        // Supplementary fields.
+        $rawdata['meta:word-count'] = 3000;
+        $rawdata['meta:page-count'] = 3;
+
+        // Emulate resourcehash from resource content.
+        $resourcehash = sha1(random_string());
+
+        $metadata = new \metadataextractor_tika\metadata_mock(0, $resourcehash, $rawdata);
+        $metadata->create();
+
+        // Manually delete the supplementary record only, to test that it is recreated at update time.
+        $DB->delete_records($metadata->get_supplementary_table(), ['id' => $metadata->get_supplementary_id()]);
 
         // Update metadata.
         $metadata->set('creator', 'Moodle 2.0');
