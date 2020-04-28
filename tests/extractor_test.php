@@ -104,9 +104,10 @@ class metadataextractor_tika_extractor_test extends advanced_testcase {
         $extractor = new extractor();
         $actual = $extractor->clean_metadata($jsonmetadata);
 
-        $this->assertIsString($actual['Creator']);
         // Multi-value metadata should be concatenated to a single string.
+        $this->assertIsString($actual['Creator']);
         $this->assertEquals($actual['Creator'], 'Dr. Eldon Tyrell, Tyrell Corporation');
+        $this->assertIsString($actual['Details']);
         $this->assertEquals($actual['Details'], 'The Nexus-6 replicant saga, 2019');
     }
 
