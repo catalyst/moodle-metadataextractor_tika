@@ -28,17 +28,20 @@ $string['metadata'] = 'Metadata';
 // Settings strings.
 $string['settings:heading'] = 'Tika settings';
 $string['settings:local:heading'] = 'Tika local application settings';
-$string['settings:local:pathtotika'] = 'Tika';
+$string['settings:local:pathtotika'] = 'Tika local path';
 $string['settings:local:pathtotika_help'] = 'The path to installed tika application java archive (*.jar file).';
 $string['settings:server:heading'] = 'Tika server endpoint settings';
-$string['settings:server:host'] = 'Tika host';
+$string['settings:server:host'] = 'Tika server host';
 $string['settings:server:host_help'] = 'The hostname of the Apache Tika server endpoint';
-$string['settings:server:port'] = 'Tika port';
+$string['settings:server:port'] = 'Tika server port';
 $string['settings:server:port_help'] = 'The port of the Apache Tika server endpoint';
+$string['settings:service:name'] = 'Apache Tika service';
+$string['settings:service:notready'] = '{$a} is disconnected and/or not working correctly';
+$string['settings:service:ready'] = '{$a} is connected and working correctly';
 $string['settings:tikaservicetype'] = 'Service type';
 $string['settings:tikaservicetype_desc'] = "The type of Tika service implementation:\n
 Local Tika application - Tika app installed on Moodle server (requires Java install)\n
-Tika server - Use REST API calls to a Tika server";
+Tika server - Use REST API calls over HTTP to a Tika server";
 $string['setting:tikaservicetype:server'] = 'Tika server';
 $string['setting:tikaservicetype:local'] = 'Local Tika application';
 
