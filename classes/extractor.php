@@ -277,13 +277,9 @@ class extractor extends \tool_metadata\extractor {
     public function extract_metadata($resource, string $type) {
         $result = null;
 
-        $rawmetadata = $this->extract($resource, $type, self::EXTRACTION_OPTION_JSON_METADATA);
+        $jsonmetadata = $this->extract($resource, $type, self::EXTRACTION_OPTION_JSON_METADATA);
 
-        if (!empty($rawmetadata)) {
-            // Use associative array as some key names may not parse well
-            // into php stdClass (eg. 'Content-Type').
-            $metadataarray = json_decode($rawmetadata, true);
-        }
+        $metadataarray = $this->clean_metadata($jsonmetadata);
 
         if (!empty($metadataarray) && is_array($metadataarray)) {
             if (array_key_exists('Content-Type', $metadataarray)) {
@@ -338,6 +334,29 @@ class extractor extends \tool_metadata\extractor {
         $metadataclass = tika_helper::get_metadata_class($mimetype);
 
         return new $metadataclass(0, $resourcehash);
+    }
+
+    /**
+     * Clean a JSON string of metadata and return an array of cleaned data.
+     *
+     * @param string $jsonmetadata JSON string containing metadata.
+     *
+     * @return array $metadataarray an array of metadata.
+     */
+    public function clean_metadata(string $jsonmetadata) {
+        if (!empty($jsonmetadata)) {
+            // Use associative array as some key names may not parse well
+            // into php stdClass (eg. 'Content-Type').
+            $metadataarray = json_decode($jsonmetadata, true);
+        }
+
+        foreach ($metadataarray as $key => $value) {
+            if (is_array($value)) {
+                $metadataarray[$key] = implode(', ', $value);
+            }
+        }
+
+        return $metadataarray;
     }
 
     /**
