@@ -50,11 +50,9 @@ class admin_setting_service_status extends admin_setting {
      *
      * @param string $name unique ascii name 'myplugin/mysetting'.
      * @param string $visiblename localised name
-     * @param string $description localised long description
-     * @param mixed $defaultsetting string or array depending on implementation
      * @param bool $ready is the service this status represents ready?
      */
-    public function __construct($name, $visiblename, $ready) {
+    public function __construct(string $name, string $visiblename, bool $ready) {
         $this->ready = $ready;
         parent::__construct($name, $visiblename, '', '');
     }
@@ -64,7 +62,7 @@ class admin_setting_service_status extends admin_setting {
      *
      * @return bool true.
      */
-    public function get_setting() {
+    public function get_setting() : bool {
         return true;
     }
 
@@ -75,18 +73,18 @@ class admin_setting_service_status extends admin_setting {
      *
      * @return string empty string.
      */
-    public function write_setting($data) {
+    public function write_setting($data) : string {
         return '';
     }
 
     /**
      * Returns the rendered output for status indication.
      *
-     * @param string $data unused.
+     * @param mixed $data unused.
      * @param string $query unused.
      * @return string XHTML field
      */
-    public function output_html($data, $query='') {
+    public function output_html($data, $query='') : string {
         global $OUTPUT;
 
         $context = new stdClass();
