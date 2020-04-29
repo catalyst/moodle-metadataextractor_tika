@@ -1,14 +1,28 @@
 # Tika metadata extractor
 
-This is a Moodle Metadata API (`tool_metadata`) subplugin designed to extract metadata from Moodle resources using the [Apache Tika toolkit.](https://tika.apache.org/index.html) 
+## Summary
+
+This is a Moodle Metadata API (`tool_metadata`) subplugin designed to extract metadata from Moodle resources using the [Apache Tika toolkit.](https://tika.apache.org/index.html)
+
+### Data Extracted
+
+The base metadata extracted by this plugin for supported resources is loosely based on a subset of the [Dublin Core](https://dublincore.org/) recommended properties in the `/elements/1.1/` namespace.
+
+Supplementary data is based on extracting as much meaningful metadata as the capabilities of Apache Tika allow for based on the mimetype of the content for which metadata is being extracted. 
+
+While all endeavours have been made to reduce the amount of `null` values stored during metadata extraction, often some blank metadata fields are unavoidable, whether due to the application which created content not adhering to metadata standards, or creator of content not providing metadata.
+
+### Supported Resources
+
+Current supported resources for metadata extraction are:
+- file: `stored_file` resources,
+- url: `mod_url` resources.
 
 ## Installation
 
 ### Dependencies
 
 __tool_metadata__: As a subplugin, you must have the parent [Metadata API plugin](https://github.com/catalyst/moodle-tool_metadata) for this plugin to work.
-
-__local_aws__: The AWS SDK wrapped up in the [local_aws plugin](https://github.com/catalyst/moodle-local_aws) includes required libraries (such as Guzzle for HTTP requests) and is planned to be utilised for support of future planned capabilities, including AWS Lambda support.
 
 ### Requirements
 
@@ -48,9 +62,23 @@ The plugin should now be ready to extract metadata from your Moodle files, you c
 
 ### Metadata Extraction
 
-File metadata extraction is controlled by a scheduled task `\tool_metadata\task\process_file_extractions_task` which will mark files for asynchronous extraction if they have not been extracted yet, or the file has been updated.
+File metadata extraction is controlled by a scheduled task `\tool_metadata\task\process_file_extractions_task` which will mark files for asynchronous extraction if they have not been extracted yet.
 
-All metadata is stored in Moodle database table `{metadataextractor_tika}`.
+URL metadata extraction is controlled by a scheduled task `\tool_metadata\task\process_url_extractions_task` which will mark URLs for asynchronous extraction if they have not been extracted yet, or the URL has been updated.
+
+Base metadata is stored in Moodle database table `{metadataextractor_tika}`, supplementary metadata based on the media type (determined by the mimetype of the resource content) is stored in various supplementary tables named `{tika_<FILETYPE>_metadata}` where filetype is the type of file determined by the mimetype, currently that includes:
+
+- document: MS Word, Libre Office Writer and other word processing documents,
+- pdf: Adobe Portable Document Format content,
+- image: Most non-moving image file types,
+- audio: Stand alone audio files (not including tracks in video content),
+- video: Most video format media (not including streams or adaptive media),
+- spreadsheet: MS Excel, Libre Office Calc, plain text CSV and other spreadsheeting application format files,
+- presentation: MS Powerpoint, Libre Office Impress and other presentation application format files.
+
+Any content which doesn't fit into one of these file types will only have core metadata extracted and no supplementary record.
+
+Supplementary records are joined to their base records via a unique SHA1 hash of the resource.
 
 ## License ##
 

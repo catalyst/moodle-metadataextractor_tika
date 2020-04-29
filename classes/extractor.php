@@ -267,32 +267,42 @@ class extractor extends \tool_metadata\extractor {
     }
 
     /**
+     * Attempt to extract resource metadata.
+     *
+     * @param object $resource the resource to extract metadata for.
+     * @param string $type the type of the resource to extract mimetype for.
+     *
+     * @return \metadataextractor_tika\metadata|null a metadata object instance or null if no metadata.
+     */
+    public function extract_metadata($resource, string $type) {
+        $result = null;
+
+        $jsonmetadata = $this->extract($resource, $type, self::EXTRACTION_OPTION_JSON_METADATA);
+
+        $metadataarray = $this->clean_metadata($jsonmetadata);
+
+        if (!empty($metadataarray) && is_array($metadataarray)) {
+            if (array_key_exists('Content-Type', $metadataarray)) {
+                $mimetype = tika_helper::get_mimetype_without_parameters($metadataarray['Content-Type']);
+                $class = tika_helper::get_metadata_class($mimetype);
+                $result = new $class(0, helper::get_resourcehash($resource, $type), $metadataarray);
+            } else {
+                $result = new metadata(0, helper::get_resourcehash($resource, $type), $metadataarray);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * Attempt to extract file metadata.
      *
      * @param \stored_file $file the file to create metadata for.
-     * @throws \tool_metadata\extraction_exception
      *
      * @return \metadataextractor_tika\metadata|null a metadata object instance or null if no metadata.
      */
     public function extract_file_metadata(stored_file $file) {
-
-        $result = null;
-
-        $rawmetadata = $this->extract($file, TOOL_METADATA_RESOURCE_TYPE_FILE, self::EXTRACTION_OPTION_JSON_METADATA);
-
-        if (!empty($rawmetadata)) {
-            // Use associative array as some key names may not parse well
-            // into php stdClass (eg. 'Content-Type').
-            $metadataarray = json_decode($rawmetadata, true);
-        }
-
-        if (!empty($metadataarray) && is_array($metadataarray)) {
-            $mimetype = $file->get_mimetype();
-            $class = tika_helper::get_metadata_class($mimetype);
-            $result = new $class(0, helper::get_resourcehash($file, TOOL_METADATA_RESOURCE_TYPE_FILE), $metadataarray);
-        }
-
-        return $result;
+        return $this->extract_metadata($file, TOOL_METADATA_RESOURCE_TYPE_FILE);
     }
 
     /**
@@ -301,27 +311,9 @@ class extractor extends \tool_metadata\extractor {
      * @param object $url the url to create metadata for.
      *
      * @return \metadataextractor_tika\metadata|null a metadata object instance or false if no metadata.
-     * @throws \tool_metadata\extraction_exception
      */
     public function extract_url_metadata($url) {
-
-        $result = null;
-
-        $rawmetadata = $this->extract($url, TOOL_METADATA_RESOURCE_TYPE_URL, self::EXTRACTION_OPTION_JSON_METADATA);
-
-        if (!empty($rawmetadata)) {
-            // Use associative array as some key names may not parse well
-            // into php stdClass (eg. 'Content-Type').
-            $metadataarray = json_decode($rawmetadata, true);
-        } else {
-            throw new extraction_exception('error:nometadata', 'metadataextractor_tika');
-        }
-
-        if (!empty($metadataarray) && is_array($metadataarray)) {
-            $result = new metadata(0, helper::get_resourcehash($url, TOOL_METADATA_RESOURCE_TYPE_URL), $metadataarray);
-        }
-
-        return $result;
+        return $this->extract_metadata($url, TOOL_METADATA_RESOURCE_TYPE_URL);
     }
 
     /**
@@ -342,6 +334,29 @@ class extractor extends \tool_metadata\extractor {
         $metadataclass = tika_helper::get_metadata_class($mimetype);
 
         return new $metadataclass(0, $resourcehash);
+    }
+
+    /**
+     * Clean a JSON string of metadata and return an array of cleaned data.
+     *
+     * @param string $jsonmetadata JSON string containing metadata.
+     *
+     * @return array $metadataarray an array of metadata.
+     */
+    public function clean_metadata(string $jsonmetadata) {
+        if (!empty($jsonmetadata)) {
+            // Use associative array as some key names may not parse well
+            // into php stdClass (eg. 'Content-Type').
+            $metadataarray = json_decode($jsonmetadata, true);
+        }
+
+        foreach ($metadataarray as $key => $value) {
+            if (is_array($value)) {
+                $metadataarray[$key] = implode(', ', $value);
+            }
+        }
+
+        return $metadataarray;
     }
 
     /**

@@ -22,7 +22,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 use metadataextractor_tika\extractor;
-use metadataextractor_tika\tika_helper;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -84,6 +83,32 @@ class metadataextractor_tika_extractor_test extends advanced_testcase {
         unset_config('tikaservicetype', 'metadataextractor_tika');
 
         $this->assertFalse($extractor->is_ready());
+    }
+
+    /**
+     * Test cleaning metadata.
+     */
+    public function test_clean_metadata() {
+        $details = new stdClass();
+        $details->title = 'The Nexus-6 replicant saga';
+        $details->published = 2019;
+
+        $metadata = [
+            'Content-Type' => 'application/pdf',
+            'Creator' => ['Dr. Eldon Tyrell', 'Tyrell Corporation'],
+            'Details' => $details
+        ];
+
+        $jsonmetadata = json_encode($metadata);
+
+        $extractor = new extractor();
+        $actual = $extractor->clean_metadata($jsonmetadata);
+
+        // Multi-value metadata should be concatenated to a single string.
+        $this->assertIsString($actual['Creator']);
+        $this->assertEquals($actual['Creator'], 'Dr. Eldon Tyrell, Tyrell Corporation');
+        $this->assertIsString($actual['Details']);
+        $this->assertEquals($actual['Details'], 'The Nexus-6 replicant saga, 2019');
     }
 
     /**

@@ -521,7 +521,7 @@ class tika_helper {
      *
      * @param array $rawmetadata raw metadata extracted from Tika.
      *
-     * @return string $mimetype the mimetype or
+     * @return string $mimetype the mimetype or string constant indicating mimetype is unknown.
      */
     public static function get_raw_metadata_mimetype(array $rawmetadata) {
 
@@ -549,5 +549,20 @@ class tika_helper {
         }
 
         return $result;
+    }
+
+    /**
+     * Get only the 'type/subtype' components of a mimetype, discarding the
+     * encoding or any other parameters (if present).
+     *
+     * @param string $mimetype the mimetype to discard parameters from.
+     *
+     * @return string $mimetype the 'type/subtype' of mimetype.
+     */
+    public static function get_mimetype_without_parameters(string $mimetype) {
+        $parts = explode(';', $mimetype, 2);
+        $mimetype = trim(reset($parts));
+
+        return $mimetype;
     }
 }
