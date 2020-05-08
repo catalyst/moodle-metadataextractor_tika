@@ -343,6 +343,5 @@ function xmldb_metadataextractor_tika_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2020050801, 'metadataextractor', 'tika');
     }
 
-
     return true;
 }
