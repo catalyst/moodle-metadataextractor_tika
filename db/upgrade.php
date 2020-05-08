@@ -312,5 +312,37 @@ function xmldb_metadataextractor_tika_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2020040601, 'metadataextractor', 'tika');
     }
 
+    if ($oldversion < 2020050801) {
+
+        // Changing type of field title on table metadataextractor_tika to text.
+        $table = new xmldb_table('metadataextractor_tika');
+        $field = new xmldb_field('title', XMLDB_TYPE_TEXT, null, null, null, null, null, 'description');
+
+        // Launch change of type for field title.
+        $dbman->change_field_type($table, $field);
+
+        // Changing type of field creator on table metadataextractor_tika to text.
+        $field = new xmldb_field('creator', XMLDB_TYPE_TEXT, null, null, null, null, null, 'subject');
+
+        // Launch change of type for field creator.
+        $dbman->change_field_type($table, $field);
+
+        $field = new xmldb_field('publisher', XMLDB_TYPE_TEXT, null, null, null, null, null, 'contributor');
+
+        // Launch change of type for field publisher.
+        $dbman->change_field_type($table, $field);
+
+        // Changing type of field bitspersample on table tika_image_metadata to char.
+        $table = new xmldb_table('tika_image_metadata');
+        $field = new xmldb_field('bitspersample', XMLDB_TYPE_CHAR, '100', null, null, null, null, 'width');
+
+        // Launch change of type for field bitspersample.
+        $dbman->change_field_type($table, $field);
+
+        // Tika savepoint reached.
+        upgrade_plugin_savepoint(true, 2020050801, 'metadataextractor', 'tika');
+    }
+
+
     return true;
 }
