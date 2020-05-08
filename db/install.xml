@@ -6,16 +6,16 @@
   <TABLES>
     <TABLE NAME="metadataextractor_tika" COMMENT="Core table for all tika metadata extracted from resources, based on Dublin Core metadata schema.">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="resourcehash" TYPE="char" LENGTH="40" NOTNULL="true" SEQUENCE="false" COMMENT="A unique identifier associated with the resource based on SHA1 hash of resource content or content identifier."/>
         <FIELD NAME="format" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The MIME type of the resource, in accordance with IANA Media Types."/>
         <FIELD NAME="type" TYPE="char" LENGTH="40" NOTNULL="false" SEQUENCE="false" COMMENT="One of the Dublin Core Metadata Initiative Type Vocabulary types."/>
         <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="title" TYPE="char" LENGTH="1000" NOTNULL="false" SEQUENCE="false" COMMENT="The name given to the resource, usually by the creator or publisher."/>
-        <FIELD NAME="subject" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The topic of the resource.  Typically, subject will be expressed as keywords or phrases that describe the subject or content of the resource."/>
-        <FIELD NAME="creator" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The person or organization primarily responsible for creating the intellectual content of the resource this metadata represents."/>
+        <FIELD NAME="title" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The name given to the resource, usually by the creator or publisher."/>
+        <FIELD NAME="subject" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The topic of the resource. Typically, subject will be expressed as keywords or phrases that describe the subject or content of the resource."/>
+        <FIELD NAME="creator" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The person or organization primarily responsible for creating the intellectual content of the resource this metadata represents."/>
         <FIELD NAME="contributor" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Persons or organizations not specified in the creator who have made significant intellectual contributions to the resource but whose contribution is secondary to any person or organization specified in creator."/>
-        <FIELD NAME="publisher" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The entity responsible for making the resource available in its present form, such as a publishing house, a university department, or a corporate entity."/>
+        <FIELD NAME="publisher" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The entity responsible for making the resource available in its present form, such as a publishing house, a university department, or a corporate entity."/>
         <FIELD NAME="rights" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="A rights management statement, an identifier that links to a rights management statement, or an identifier that links to a service providing information about rights management for the resource."/>
         <FIELD NAME="language" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Language of the resource."/>
         <FIELD NAME="date" TYPE="char" LENGTH="100" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The date/time when the resource was created."/>
@@ -25,7 +25,7 @@
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The date/time metadata was updated"/>
       </FIELDS>
       <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
         <KEY NAME="resourcehash" TYPE="unique" FIELDS="resourcehash"/>
       </KEYS>
     </TABLE>
@@ -66,7 +66,7 @@
         <FIELD NAME="resourcehash" TYPE="char" LENGTH="40" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="height" TYPE="char" LENGTH="15" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="width" TYPE="char" LENGTH="15" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="bitspersample" TYPE="char" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="bitspersample" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="location" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
