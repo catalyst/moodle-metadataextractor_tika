@@ -505,7 +505,8 @@ class tika_helper {
      * @return string
      */
     public static function get_metadata_class(string $mimetype) {
-        $filetype = self::get_filetype($mimetype);
+        $mimetypewithoutparams = self::get_mimetype_without_parameters($mimetype);
+        $filetype = self::get_filetype($mimetypewithoutparams);
 
         if (self::is_filetype_supported($filetype)) {
             $class = '\metadataextractor_tika\metadata_' . $filetype;

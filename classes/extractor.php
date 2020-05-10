@@ -283,8 +283,7 @@ class extractor extends \tool_metadata\extractor {
 
         if (!empty($metadataarray) && is_array($metadataarray)) {
             if (array_key_exists('Content-Type', $metadataarray)) {
-                $mimetype = tika_helper::get_mimetype_without_parameters($metadataarray['Content-Type']);
-                $class = tika_helper::get_metadata_class($mimetype);
+                $class = tika_helper::get_metadata_class($metadataarray['Content-Type']);
                 $result = new $class(0, helper::get_resourcehash($resource, $type), $metadataarray);
             } else {
                 $result = new metadata(0, helper::get_resourcehash($resource, $type), $metadataarray);
