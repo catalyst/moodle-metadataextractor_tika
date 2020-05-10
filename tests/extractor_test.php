@@ -258,6 +258,28 @@ class metadataextractor_tika_extractor_test extends advanced_testcase {
     }
 
     /**
+     * Test getting metadata.
+     */
+    public function test_get_metadata() {
+        [$unused, $file] = \tool_metadata\mock_file_builder::mock_pdf();
+        $extractor = new extractor();
+
+        // Make sure we have the correct configuration and dependencies to carry out this test.
+        $this->can_test_extraction($extractor);
+
+        $metadata = $extractor->extract_metadata($file, TOOL_METADATA_RESOURCE_TYPE_FILE);
+        $metadata->set('format', 'application/pdf; version=1.5');
+        $metadata->save();
+
+        $resourcehash = $metadata->get('resourcehash');
+
+        $actual = $extractor->get_metadata($resourcehash);
+        // Metadata should be an instance of the correct class.
+        $this->assertInstanceOf(\metadataextractor_tika\metadata_pdf::class, $actual);
+        $this->assertEquals($metadata->id, $actual->id);
+    }
+
+    /**
      * Test getting missing dependencies.
      */
     public function test_get_missing_dependencies() {
