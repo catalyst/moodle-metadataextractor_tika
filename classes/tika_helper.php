@@ -137,7 +137,6 @@ class tika_helper {
             'application/vnd.ms-excel',
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'application/vnd.oasis.opendocument.spreadsheet',
-            'text/plain; charset=ISO-8859-1'
         ],
         self::FILETYPE_IMAGE => [
             'image/aces',

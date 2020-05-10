@@ -49,7 +49,6 @@ class metadataextractor_tika_helper_test extends advanced_testcase {
             'PDF' => ['application/pdf', 'pdf'],
             'Presentation' => ['application/vnd.ms-powerpoint', 'presentation'],
             'Spreadsheet' => ['application/vnd.ms-excel', 'spreadsheet'],
-            'Plain text spreadsheet' => ['text/plain; charset=ISO-8859-1', 'spreadsheet'],
             'Image' => ['image/jpeg', 'image'],
             'Video' => ['video/mpeg', 'video'],
             'Audio' => ['audio/mp4', 'audio'],
