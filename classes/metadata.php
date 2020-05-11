@@ -438,10 +438,9 @@ class metadata extends \tool_metadata\metadata {
 
         if ($success && $this->has_supplementary_data()) {
             $id = $this->get_supplementary_id();
-            if (empty($id)) {
-                throw new metadata_exception('error:metadata:noid');
+            if (!empty($id)) {
+                $success = $DB->delete_records($this->get_supplementary_table(), ['id' => $id]);
             }
-            $success = $DB->delete_records($this->get_supplementary_table(), ['id' => $id]);
         }
 
         if ($success) {
