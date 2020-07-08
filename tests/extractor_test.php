@@ -277,6 +277,14 @@ class metadataextractor_tika_extractor_test extends advanced_testcase {
         // Metadata should be an instance of the correct class.
         $this->assertInstanceOf(\metadataextractor_tika\metadata_pdf::class, $actual);
         $this->assertEquals($metadata->id, $actual->id);
+
+        $metadata->set('format', null);
+        $metadata->save();
+
+        $actual = $extractor->get_metadata($resourcehash);
+        // If stored metadata has no format, metadata should be instance of base class as type can't be coerced.
+        $this->assertInstanceOf(\metadataextractor_tika\metadata::class, $actual);
+        $this->assertEquals($metadata->id, $actual->id);
     }
 
     /**
