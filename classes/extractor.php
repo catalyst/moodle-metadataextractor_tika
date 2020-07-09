@@ -330,7 +330,7 @@ class extractor extends \tool_metadata\extractor {
 
         $mimetype = $DB->get_field($this->get_base_table(), 'format', ['resourcehash' => $resourcehash]);
 
-        $metadataclass = tika_helper::get_metadata_class($mimetype);
+        $metadataclass = tika_helper::get_metadata_class((string) $mimetype);
 
         return new $metadataclass(0, $resourcehash);
     }
