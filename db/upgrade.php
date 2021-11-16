@@ -343,5 +343,18 @@ function xmldb_metadataextractor_tika_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2020050801, 'metadataextractor', 'tika');
     }
 
+    if ($oldversion < 2021111613) {
+
+        // Changing type of field creationtool on table tika_pdf_metadata to text.
+        $table = new xmldb_table('tika_pdf_metadata');
+        $field = new xmldb_field('creationtool', XMLDB_TYPE_TEXT, null, null, null, null, null, 'pagecount');
+
+        // Launch change of type for field creationtool.
+        $dbman->change_field_type($table, $field);
+
+        // Tika savepoint reached.
+        upgrade_plugin_savepoint(true, 2021111613, 'metadataextractor', 'tika');
+    }
+
     return true;
 }
