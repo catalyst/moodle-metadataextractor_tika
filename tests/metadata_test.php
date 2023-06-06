@@ -38,7 +38,7 @@ require_once(__DIR__ . '/metadata_mock.php');
  */
 class metadataextractor_tika_metadata_testcase extends advanced_testcase {
 
-    public function setUp() {
+    public function setUp(): void {
         global $DB;
 
         $this->resetAfterTest();
@@ -58,7 +58,7 @@ class metadataextractor_tika_metadata_testcase extends advanced_testcase {
         $dbman->create_table($table);
     }
 
-    public function tearDown() {
+    public function tearDown(): void {
         global $DB;
 
         $dbman = $DB->get_manager();

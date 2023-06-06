@@ -34,7 +34,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 class metadataextractor_tika_helper_test extends advanced_testcase {
 
-    public function setUp() {
+    public function setUp(): void {
         $this->resetAfterTest();
     }
 

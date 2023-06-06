@@ -37,7 +37,7 @@ require_once(__DIR__ . '/../../../classes/mock_file_builder.php');
  */
 class metadataextractor_tika_extractor_test extends advanced_testcase {
 
-    public function setUp() {
+    public function setUp(): void {
         $this->resetAfterTest();
     }
 
