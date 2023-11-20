@@ -39,21 +39,21 @@ defined('MOODLE_INTERNAL') || die();
 class admin_setting_service_status extends admin_setting {
 
     /**
-     * The ready state of the service.
+     * The label for the button.
      *
-     * @var bool $ready true if ready, false otherwise.
+     * @var string $buttonlabel button label.
      */
-    protected $ready;
+    protected $buttonlabel;
 
     /**
      * admin_setting_status constructor.
      *
      * @param string $name unique ascii name 'myplugin/mysetting'.
      * @param string $visiblename localised name
-     * @param bool $ready is the service this status represents ready?
+     * @param string $buttonlabel the button label
      */
-    public function __construct(string $name, string $visiblename, bool $ready) {
-        $this->ready = $ready;
+    public function __construct(string $name, string $visiblename, string $buttonlabel) {
+        $this->buttonlabel = $buttonlabel;
         parent::__construct($name, $visiblename, '', '');
     }
 
@@ -85,14 +85,15 @@ class admin_setting_service_status extends admin_setting {
      * @return string XHTML field
      */
     public function output_html($data, $query='') : string {
-        global $OUTPUT;
+        global $PAGE;
 
-        $context = new stdClass();
-        $context->ready = $this->ready;
-        $context->servicename = $this->visiblename;
+        $attributes = ['id' => 'tika-test-service-button', 'class' => 'btn btn-primary'];
+        $html  = \html_writer::tag('button', $this->buttonlabel, $attributes);
+        $html .= \html_writer::tag('div', '', ['id' => 'tika-test-service-container']);
 
-        $element = $OUTPUT->render_from_template('metadataextractor_tika/service_status', $context);
+        $args = ['tika-test-service-container', 'tika-test-service-button', $this->visiblename];
+        $PAGE->requires->js_call_amd('metadataextractor_tika/test_service', 'init', $args);
 
-        return format_admin_setting($this, $this->visiblename, $element);
+        return format_admin_setting($this, $this->visiblename, $html);
     }
 }

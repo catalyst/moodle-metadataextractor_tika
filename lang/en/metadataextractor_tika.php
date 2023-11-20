@@ -35,6 +35,7 @@ $string['settings:server:host'] = 'Tika server host';
 $string['settings:server:host_help'] = 'The hostname of the Apache Tika server endpoint';
 $string['settings:server:port'] = 'Tika server port';
 $string['settings:server:port_help'] = 'The port of the Apache Tika server endpoint';
+$string['settings:service:buttonlabel'] = 'Test service';
 $string['settings:service:name'] = 'Apache Tika service';
 $string['settings:service:notready'] = '{$a} is disconnected and/or not working correctly';
 $string['settings:service:ready'] = '{$a} is connected and working correctly';

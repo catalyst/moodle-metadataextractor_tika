@@ -15,18 +15,20 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version details.
+ * This module adds ajax functions for the metadataextractor_tika plugin.
  *
  * @package    metadataextractor_tika
- * @copyright  2019 Tom Dickman <tomdickman@catalyst-au.net>
+ * @copyright  2023 Rossco Hellmans <rosscohellmans@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->version   = 2023112000;        // The current plugin version (Date: YYYYMMDDXX).
-$plugin->requires  = 2019052003;        // Requires this Moodle version.
-$plugin->component = 'metadataextractor_tika';        // Full name of the plugin (used for diagnostics).
-$plugin->maturity = MATURITY_STABLE;
-
-$plugin->dependencies = array('tool_metadata' => 2020042101);
+$functions = [
+    'metadataextractor_tika_is_service_ready' => [
+        'classname'     => 'metadataextractor_tika\external',
+        'methodname'    => 'is_service_ready',
+        'classpath'     => '',
+        'description'   => 'Checks if Tika service is ready.',
+        'type'          => 'read',
+        'ajax'          => true
+    ],
+];

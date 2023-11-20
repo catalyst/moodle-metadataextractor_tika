@@ -29,12 +29,12 @@
     Setting service status.
 }}
 {{#ready}}
-    <div class="alert alert-success">
+    <div class="alert alert-success mt-2">
         {{#str}} settings:service:ready, metadataextractor_tika, {{servicename}} {{/str}}
     </div>
 {{/ready}}
 {{^ready}}
-    <div class="alert alert-danger">
+    <div class="alert alert-danger mt-2">
         {{#str}} settings:service:notready, metadataextractor_tika, {{servicename}} {{/str}}
     </div>
 {{/ready}}

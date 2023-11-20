@@ -69,8 +69,7 @@ if ($hassiteconfig) {
 
     }
 
-    $extractor = new \metadataextractor_tika\extractor();
     $settings->add(new \metadataextractor_tika\admin_setting_service_status('metadataextractor_tika/tikaservicestatus',
         get_string('settings:service:name', 'metadataextractor_tika'),
-        $extractor->is_ready()));
+        get_string('settings:service:buttonlabel', 'metadataextractor_tika')));
 }
