@@ -33,7 +33,6 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->dirroot . '/mod/url/locallib.php');
 require_once($CFG->dirroot . '/admin/tool/metadata/constants.php');
-require_once($CFG->dirroot . '/admin/tool/metadata/vendor/autoload.php');
 
 /**
  * Class for making API requests to a Tika server.
