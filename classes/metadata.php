@@ -113,6 +113,11 @@ class metadata extends \tool_metadata\metadata {
     public $resourcemodified;
 
     /**
+     * @var string date/time associated with an event in the lifecycle of the resource.
+     */
+    public $date;
+
+    /**
      * Get the supplementary table for metadata instance.
      *
      * @return string
