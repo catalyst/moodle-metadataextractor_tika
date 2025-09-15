@@ -177,8 +177,8 @@ class metadataextractor_tika_metadata_testcase extends advanced_testcase {
         $this->assertEquals($resourcehash, $metadata->get_resourcehash());
         $this->assertEquals($rawdata['meta:creator'], $metadata->get('creator'));
         $this->assertEquals($rawdata['meta:title'], $metadata->get('title'));
-        $this->assertClassNotHasAttribute('wordcount', \metadataextractor_tika\metadata::class);
-        $this->assertClassNotHasAttribute('pagecount', \metadataextractor_tika\metadata::class);
+        $this->assertObjectNotHasProperty('wordcount', $metadata);
+        $this->assertObjectNotHasProperty('pagecount', $metadata);
     }
 
     public function test_populate_from_resourcehash() {
@@ -223,8 +223,8 @@ class metadataextractor_tika_metadata_testcase extends advanced_testcase {
         $this->assertEquals($resourcehash, $metadata->get_resourcehash());
         $this->assertEquals($rawdata['meta:creator'], $metadata->get('creator'));
         $this->assertEquals($rawdata['meta:title'], $metadata->get('title'));
-        $this->assertClassNotHasAttribute('wordcount', \metadataextractor_tika\metadata::class);
-        $this->assertClassNotHasAttribute('pagecount', \metadataextractor_tika\metadata::class);
+        $this->assertObjectNotHasProperty('wordcount', $metadata);
+        $this->assertObjectNotHasProperty('pagecount', $metadata);
 
         $resourcehash = sha1(random_string());
 
@@ -263,8 +263,8 @@ class metadataextractor_tika_metadata_testcase extends advanced_testcase {
         $this->assertEquals($resourcehash, $metadata->get_resourcehash());
         $this->assertEquals($rawdata['meta:creator'], $metadata->get('creator'));
         $this->assertEquals($rawdata['meta:title'], $metadata->get('title'));
-        $this->assertClassNotHasAttribute('wordcount', \metadataextractor_tika\metadata::class);
-        $this->assertClassNotHasAttribute('pagecount', \metadataextractor_tika\metadata::class);
+        $this->assertObjectNotHasProperty('wordcount', $metadata);
+        $this->assertObjectNotHasProperty('pagecount', $metadata);
     }
 
     public function test_create() {
