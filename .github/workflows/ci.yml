@@ -8,4 +8,6 @@ jobs:
     uses: catalyst/catalyst-moodle-workflows/.github/workflows/ci.yml@main
     with:
       disable_phpdoc: true
-      extra_plugin_runners: 'moodle-plugin-ci add-plugin catalyst/moodle-tool_metadata'
+      extra_plugin_runners: 'moodle-plugin-ci add-plugin --branch master catalyst/moodle-tool_metadata'
+    secrets:
+      moodle_org_token: ${{ secrets.MOODLE_ORG_TOKEN }}
